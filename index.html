@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Personal Asset Manager</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     body {
@@ -134,6 +136,12 @@
       vertical-align: middle;
     }
 
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 340px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -191,7 +199,7 @@
     <h1>
       Personal Asset Manager
       <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">
-        v1.2.4
+        v1.2.6
       </span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
@@ -236,6 +244,17 @@
       <h2>Selected Month Total Asset Value</h2>
       <div id="totalValue" class="summary-value">Loading...</div>
       <div id="totalCaption" class="section-note"></div>
+    </div>
+
+    <div class="card">
+      <h2>Category Trend</h2>
+      <div class="chart-container">
+        <canvas id="categoryTrendChart"></canvas>
+      </div>
+      <div id="chartEmptyMessage" class="empty-message"></div>
+      <div class="section-note">
+        Stacked bar chart of category totals by month.
+      </div>
     </div>
 
     <div class="card">
@@ -363,6 +382,7 @@
   const assetTableBodyEl = document.getElementById('assetTableBody');
   const emptyMessageEl = document.getElementById('emptyMessage');
   const tableErrorEl = document.getElementById('tableError');
+  const chartEmptyMessageEl = document.getElementById('chartEmptyMessage');
 
   const formTitleEl = document.getElementById('formTitle');
   const formModeBadgeEl = document.getElementById('formModeBadge');
@@ -382,6 +402,9 @@
   let selectedMonth = '';
   let editingId = null;
   let currentUser = null;
+  let categoryTrendChart = null;
+
+  const categoryOrder = ['Cash', 'Bank', 'Securities', 'Alternative', 'Pension', 'Point', 'Mile', 'Other'];
 
   const categorySortOrder = {
     Cash: 1,
@@ -394,15 +417,50 @@
     Other: 8
   };
 
+  // 表示名は分かりやすい名称のまま維持
+  const assetSortOrder = {
+    '手持ち': 1,
+    'ゆうちょ銀行': 2,
+    'みずほ銀行': 3,
+    '共通口座': 4,
+    'イオン銀行': 5,
+    'JRE BANK': 6,
+    'SBI銀行': 7,
+    'SBI証券': 8,
+    'SMBC日興証券': 9,
+    'クラウドクレジット': 10,
+    '拠出型年金': 11,
+    'DMM FX': 12,
+    'JALマイル': 13,
+    'e JAポイント': 14,
+    'ANAマイル': 15,
+    'ANAコイン': 16,
+    'Metoro': 17,
+    '楽天': 18,
+    'JRE POINT': 19,
+    'WAON POINT': 20
+  };
+
   const assetOptions = {
     Cash: ['手持ち'],
     Bank: ['ゆうちょ銀行', 'みずほ銀行', '共通口座', 'イオン銀行', 'JRE BANK', 'SBI銀行'],
     Securities: ['SBI証券', 'SMBC日興証券'],
     Alternative: ['クラウドクレジット', 'DMM FX'],
     Pension: ['拠出型年金'],
-    Point: ['ANAコイン', 'e-JALポイント', 'メトポ', '楽天ポイント', 'JRE POINT', 'WAON POINT'],
+    Point: ['e JAポイント', 'ANAコイン', 'Metoro', '楽天', 'JRE POINT', 'WAON POINT'],
     Mile: ['JALマイル', 'ANAマイル'],
     Other: []
+  };
+
+  const categoryColors = {
+    Cash: '#4e79a7',
+    Bank: '#59a14f',
+    Securities: '#9c755f',
+    Alternative: '#e15759',
+    Pension: '#f28e2b',
+    Point: '#edc948',
+    Mile: '#76b7b2',
+    Other: '#bab0ab'
   };
 
   function populateAssetNameOptions(category, selectedValue = '') {
@@ -595,11 +653,18 @@
     detailCaptionEl.textContent = selectedMonth ? `Showing details for ${selectedMonth}` : '';
 
     const rows = getSelectedRows().sort((a, b) => {
-      const aOrder = categorySortOrder[a.asset_category] || 999;
-      const bOrder = categorySortOrder[b.asset_category] || 999;
+      const aCategoryOrder = categorySortOrder[a.asset_category] || 999;
+      const bCategoryOrder = categorySortOrder[b.asset_category] || 999;
 
-      if (aOrder !== bOrder) {
-        return aOrder - bOrder;
+      if (aCategoryOrder !== bCategoryOrder) {
+        return aCategoryOrder - bCategoryOrder;
+      }
+
+      const aAssetOrder = assetSortOrder[a.asset_name] || 999;
+      const bAssetOrder = assetSortOrder[b.asset_name] || 999;
+
+      if (aAssetOrder !== bAssetOrder) {
+        return aAssetOrder - bAssetOrder;
       }
 
       return (a.asset_name || '').localeCompare(b.asset_name || '');
@@ -664,6 +729,85 @@
     });
   }
 
+  function renderCategoryTrendChart() {
+    chartEmptyMessageEl.textContent = '';
+
+    if (categoryTrendChart) {
+      categoryTrendChart.destroy();
+      categoryTrendChart = null;
+    }
+
+    if (!assetRows.length) {
+      chartEmptyMessageEl.textContent = 'No category trend data found.';
+      return;
+    }
+
+    const monthMap = new Map();
+
+    assetRows.forEach(row => {
+      const month = getMonth(row.record_date);
+      const category = row.asset_category || 'Other';
+      const value = Number(row.amount || 0) * Number(row.unit_price_jpy || 0);
+
+      if (!monthMap.has(month)) {
+        monthMap.set(month, {});
+      }
+
+      const categoryMap = monthMap.get(month);
+      categoryMap[category] = (categoryMap[category] || 0) + value;
+    });
+
+    const labels = [...monthMap.keys()].sort((a, b) => a.localeCompare(b));
+
+    const datasets = categoryOrder.map(category => ({
+      label: category,
+      data: labels.map(month => {
+        const categoryTotals = monthMap.get(month) || {};
+        return Math.floor(categoryTotals[category] || 0);
+      }),
+      backgroundColor: categoryColors[category] || '#999999'
+    }));
+
+    const ctx = document.getElementById('categoryTrendChart').getContext('2d');
+
+    categoryTrendChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `${context.dataset.label}: ¥ ${formatValueJpy(context.raw)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true
+          },
+          y: {
+            stacked: true,
+            ticks: {
+              callback: function(value) {
+                return '¥ ' + formatValueJpy(value);
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
   async function loadAssets() {
     try {
       tableErrorEl.textContent = '';
@@ -671,6 +815,7 @@
       totalCaptionEl.textContent = 'Loading asset data...';
       monthSummaryBodyEl.innerHTML = '';
       assetTableBodyEl.innerHTML = '';
+      chartEmptyMessageEl.textContent = '';
 
       const queryPromise = client
         .from('assets')
@@ -698,6 +843,7 @@
 
       renderSummary();
       renderDetails();
+      renderCategoryTrendChart();
 
       if (!assetRows.length) {
         totalCaptionEl.textContent = 'Loaded successfully, but no asset rows were returned.';
@@ -707,6 +853,10 @@
       totalValueEl.textContent = '-';
       totalCaptionEl.textContent = 'Load failed';
       tableErrorEl.textContent = 'Error loading data: ' + (e.message || JSON.stringify(e));
+      if (categoryTrendChart) {
+        categoryTrendChart.destroy();
+        categoryTrendChart = null;
+      }
     }
   }
 
@@ -832,6 +982,11 @@
       totalCaptionEl.textContent = '';
       monthSummaryBodyEl.innerHTML = '';
       assetTableBodyEl.innerHTML = '';
+      chartEmptyMessageEl.textContent = '';
+      if (categoryTrendChart) {
+        categoryTrendChart.destroy();
+        categoryTrendChart = null;
+      }
     }
   });
 
