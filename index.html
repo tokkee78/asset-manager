@@ -94,6 +94,28 @@
       align-items: center;
     }
 
+    .small-button {
+      min-width: auto;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .secondary-button {
+      background: #666;
+    }
+
+    .secondary-button:hover {
+      background: #444;
+    }
+
+    .danger-button {
+      background: #b71c1c;
+    }
+
+    .danger-button:hover {
+      background: #8f1212;
+    }
+
     .success {
       color: #0a7a28;
       margin-top: 10px;
@@ -106,6 +128,21 @@
       white-space: pre-wrap;
     }
 
+    .mode-badge {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eee;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+
+    .edit-mode {
+      background: #fff3cd;
+      color: #8a6d3b;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -116,6 +153,7 @@
       border: 1px solid #ddd;
       padding: 10px;
       text-align: left;
+      vertical-align: middle;
     }
 
     th {
@@ -124,6 +162,12 @@
 
     .number {
       text-align: right;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .section-note {
@@ -151,7 +195,11 @@
   </div>
 
   <div class="card">
-    <h2>Add Asset Record</h2>
+    <h2>
+      <span id="formTitle">Add Asset Record</span>
+      <span id="formModeBadge" class="mode-badge" style="display:none;"></span>
+    </h2>
+
     <form id="assetForm">
       <div class="form-group">
         <label for="recordDate">Record Date</label>
@@ -194,7 +242,7 @@
 
       <div class="button-row full-width">
         <button type="submit" id="saveButton">Save</button>
-        <button type="button" id="clearButton">Clear</button>
+        <button type="button" id="clearButton" class="secondary-button">Clear</button>
       </div>
 
       <div id="formSuccess" class="success full-width"></div>
@@ -217,6 +265,7 @@
           <th>Amount</th>
           <th>Unit Price (JPY)</th>
           <th>Value (JPY)</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody id="assetTableBody"></tbody>
@@ -231,6 +280,8 @@
     const { createClient } = supabase;
     const client = createClient(supabaseUrl, supabaseKey);
 
+    const formTitleEl = document.getElementById('formTitle');
+    const formModeBadgeEl = document.getElementById('formModeBadge');
     const recordDateEl = document.getElementById('recordDate');
     const assetCategoryEl = document.getElementById('assetCategory');
     const assetNameEl = document.getElementById('assetName');
@@ -245,6 +296,9 @@
     const totalValueEl = document.getElementById('totalValue');
     const assetTableBodyEl = document.getElementById('assetTableBody');
     const tableErrorEl = document.getElementById('tableError');
+
+    let editingId = null;
+    let assetRows = [];
 
     function formatNumber(value) {
       if (value === null || value === undefined || value === '') return '';
@@ -277,7 +331,37 @@
       tableErrorEl.textContent = '';
     }
 
+    function setAddMode() {
+      editingId = null;
+      formTitleEl.textContent = 'Add Asset Record';
+      formModeBadgeEl.style.display = 'none';
+      formModeBadgeEl.textContent = '';
+      formModeBadgeEl.className = 'mode-badge';
+      saveButtonEl.textContent = 'Save';
+    }
+
+    function setEditMode(row) {
+      editingId = row.id;
+
+      formTitleEl.textContent = 'Edit Asset Record';
+      formModeBadgeEl.style.display = 'inline-block';
+      formModeBadgeEl.textContent = `Editing ID: ${row.id}`;
+      formModeBadgeEl.className = 'mode-badge edit-mode';
+      saveButtonEl.textContent = 'Update';
+
+      recordDateEl.value = row.record_date ?? '';
+      assetCategoryEl.value = row.asset_category ?? '';
+      assetNameEl.value = row.asset_name ?? '';
+      amountEl.value = row.amount ?? '';
+      unitPriceJpyEl.value = row.unit_price_jpy ?? '';
+      calculateValue();
+
+      clearMessages();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function clearForm() {
+      setAddMode();
       setDefaultDateToMonthEnd();
       assetCategoryEl.value = '';
       assetNameEl.value = '';
@@ -294,7 +378,7 @@
 
       const { data, error } = await client
         .from('assets')
-        .select('record_date, asset_category, asset_name, amount, unit_price_jpy')
+        .select('id, record_date, asset_category, asset_name, amount, unit_price_jpy')
         .order('record_date', { ascending: false })
         .order('asset_category', { ascending: true })
         .order('asset_name', { ascending: true });
@@ -305,15 +389,39 @@
         return;
       }
 
+      assetRows = data || [];
+
       let total = 0;
 
-      data.forEach((row) => {
+      assetRows.forEach((row) => {
         const amount = Number(row.amount || 0);
         const unitPrice = Number(row.unit_price_jpy || 0);
         const valueJpy = amount * unitPrice;
         total += valueJpy;
 
         const tr = document.createElement('tr');
+
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.textContent = 'Edit';
+        editButton.className = 'small-button secondary-button';
+        editButton.addEventListener('click', () => {
+          setEditMode(row);
+        });
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'small-button danger-button';
+        deleteButton.addEventListener('click', async () => {
+          await deleteAsset(row.id, row.asset_name);
+        });
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'actions';
+        actionsDiv.appendChild(editButton);
+        actionsDiv.appendChild(deleteButton);
+
         tr.innerHTML = `
           <td>${row.record_date ?? ''}</td>
           <td>${row.asset_category ?? ''}</td>
@@ -322,13 +430,18 @@
           <td class="number">${formatNumber(unitPrice)}</td>
           <td class="number">${formatNumber(valueJpy)}</td>
         `;
+
+        const actionsTd = document.createElement('td');
+        actionsTd.appendChild(actionsDiv);
+        tr.appendChild(actionsTd);
+
         assetTableBodyEl.appendChild(tr);
       });
 
       totalValueEl.textContent = '¥ ' + formatNumber(total);
     }
 
-    async function insertAssetRecord(event) {
+    async function saveAssetRecord(event) {
       event.preventDefault();
       clearMessages();
 
@@ -349,41 +462,75 @@
       }
 
       saveButtonEl.disabled = true;
-      saveButtonEl.textContent = 'Saving...';
+      saveButtonEl.textContent = editingId === null ? 'Saving...' : 'Updating...';
 
-      const { error } = await client
-        .from('assets')
-        .insert([
-          {
-            record_date,
-            asset_category,
-            asset_name,
-            amount,
-            unit_price_jpy
-          }
-        ]);
+      const payload = {
+        record_date,
+        asset_category,
+        asset_name,
+        amount,
+        unit_price_jpy
+      };
 
-      if (error) {
-        formErrorEl.textContent = 'Error saving data: ' + error.message;
+      let response;
+
+      if (editingId === null) {
+        response = await client.from('assets').insert([payload]);
+      } else {
+        response = await client
+          .from('assets')
+          .update(payload)
+          .eq('id', editingId);
+      }
+
+      if (response.error) {
+        formErrorEl.textContent = 'Error saving data: ' + response.error.message;
         saveButtonEl.disabled = false;
-        saveButtonEl.textContent = 'Save';
+        saveButtonEl.textContent = editingId === null ? 'Save' : 'Update';
         return;
       }
 
-      formSuccessEl.textContent = 'Saved successfully.';
+      formSuccessEl.textContent = editingId === null
+        ? 'Saved successfully.'
+        : 'Updated successfully.';
+
       saveButtonEl.disabled = false;
-      saveButtonEl.textContent = 'Save';
+      saveButtonEl.textContent = editingId === null ? 'Save' : 'Update';
 
       clearForm();
       await loadAssets();
     }
 
+    async function deleteAsset(id, assetName) {
+      clearMessages();
+
+      const confirmed = window.confirm(`Delete this record?\n\nAsset Name: ${assetName}\nID: ${id}`);
+      if (!confirmed) return;
+
+      const { error } = await client
+        .from('assets')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        tableErrorEl.textContent = 'Error deleting data: ' + error.message;
+        return;
+      }
+
+      if (editingId === id) {
+        clearForm();
+      }
+
+      formSuccessEl.textContent = 'Deleted successfully.';
+      await loadAssets();
+    }
+
     amountEl.addEventListener('input', calculateValue);
     unitPriceJpyEl.addEventListener('input', calculateValue);
-    assetFormEl.addEventListener('submit', insertAssetRecord);
+    assetFormEl.addEventListener('submit', saveAssetRecord);
     clearButtonEl.addEventListener('click', clearForm);
 
-    setDefaultDateToMonthEnd();
+    clearForm();
     loadAssets();
   </script>
 </body>
