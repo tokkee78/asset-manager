@@ -1,10 +1,161 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Personal Asset Manager</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Asset Manager</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 32px;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .muted {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .summary-value {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f0f0f0;
+    }
+
+    .number {
+      text-align: right;
+    }
+
+    #error {
+      color: red;
+      margin-top: 12px;
+      white-space: pre-wrap;
+    }
+
+    .loading {
+      color: #666;
+    }
+  </style>
 </head>
 <body>
+  <div class="card">
     <h1>Personal Asset Manager</h1>
-    <p>Hello World!</p>
+    <div class="muted">Asset records loaded from Supabase</div>
+  </div>
+
+  <div class="card">
+    <h2>Total Asset Value</h2>
+    <div id="totalValue" class="summary-value loading">Loading...</div>
+  </div>
+
+  <div class="card">
+    <h2>Asset List</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Category</th>
+          <th>Asset Name</th>
+          <th>Amount</th>
+          <th>Unit Price (JPY)</th>
+          <th>Value (JPY)</th>
+        </tr>
+      </thead>
+      <tbody id="assetTableBody"></tbody>
+    </table>
+    <div id="error"></div>
+  </div>
+
+  <script>
+    const supabaseUrl = 'https://nowhqyugwptzjdwrknlc.supabase.co';
+    const supabaseKey = 'sb_publishable_HkqukxAoPQkaQlUH6hLZEw_rFjbzsy3';
+
+    const { createClient } = supabase;
+    const client = createClient(supabaseUrl, supabaseKey);
+
+    function formatNumber(value) {
+      if (value === null || value === undefined || value === '') return '';
+      return Number(value).toLocaleString();
+    }
+
+    async function loadAssets() {
+      const totalValueEl = document.getElementById('totalValue');
+      const tableBody = document.getElementById('assetTableBody');
+      const errorEl = document.getElementById('error');
+
+      totalValueEl.textContent = 'Loading...';
+      tableBody.innerHTML = '';
+      errorEl.textContent = '';
+
+      const { data, error } = await client
+        .from('assets')
+        .select('record_date, asset_category, asset_name, amount, unit_price_jpy')
+        .order('record_date', { ascending: false })
+        .order('asset_category', { ascending: true })
+        .order('asset_name', { ascending: true });
+
+      if (error) {
+        totalValueEl.textContent = '-';
+        errorEl.textContent = 'Error loading data:\n' + error.message;
+        return;
+      }
+
+      let total = 0;
+
+      data.forEach((row) => {
+        const amount = Number(row.amount || 0);
+        const unitPrice = Number(row.unit_price_jpy || 0);
+        const valueJpy = amount * unitPrice;
+        total += valueJpy;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.record_date ?? ''}</td>
+          <td>${row.asset_category ?? ''}</td>
+          <td>${row.asset_name ?? ''}</td>
+          <td class="number">${formatNumber(amount)}</td>
+          <td class="number">${formatNumber(unitPrice)}</td>
+          <td class="number">${formatNumber(valueJpy)}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      totalValueEl.textContent = '¥ ' + formatNumber(total);
+    }
+
+    loadAssets();
+  </script>
 </body>
 </html>
