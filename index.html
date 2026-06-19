@@ -191,7 +191,7 @@
     <h1>
       Personal Asset Manager
       <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">
-        v1.2.2
+        v1.2.3
       </span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
@@ -293,7 +293,7 @@
 
         <div class="form-group">
           <label for="unitPriceJpy">Unit Price (JPY)</label>
-          <input type="number" id="unitPriceJpy" step="0.0001" min="0" placeholder="e.g. 1 or 1.5" required />
+          <input type="number" id="unitPriceJpy" step="0.01" min="0" placeholder="e.g. 1.00 or 1.50" required />
         </div>
 
         <div class="form-group">
@@ -311,7 +311,8 @@
       </form>
 
       <div class="section-note">
-        Value (JPY) is calculated as Amount × Unit Price (JPY).
+        Unit Price (JPY) is displayed with 2 decimal places.  
+        Value (JPY) is calculated as Amount × Unit Price (JPY) and displayed as a rounded-down integer.
       </div>
     </div>
 
@@ -417,8 +418,15 @@
     assetNameEl.value = selectedValue || '';
   }
 
-  function formatNumber(value) {
-    return Number(value || 0).toLocaleString();
+  function formatUnitPrice(value) {
+    return Number(value || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function formatValueJpy(value) {
+    return Math.floor(Number(value || 0)).toLocaleString();
   }
 
   function getMonth(recordDate) {
@@ -437,7 +445,7 @@
   function calculateValue() {
     const amount = Number(amountEl.value || 0);
     const unitPrice = Number(unitPriceJpyEl.value || 0);
-    calculatedValueEl.value = formatNumber(amount * unitPrice);
+    calculatedValueEl.value = formatValueJpy(amount * unitPrice);
   }
 
   function clearMessages() {
@@ -479,7 +487,7 @@
     assetCategoryEl.value = row.asset_category || '';
     populateAssetNameOptions(row.asset_category || '', row.asset_name || '');
     amountEl.value = row.amount || '';
-    unitPriceJpyEl.value = row.unit_price_jpy || '';
+    unitPriceJpyEl.value = Number(row.unit_price_jpy || 0).toFixed(2);
     calculateValue();
 
     clearMessages();
@@ -544,7 +552,7 @@
 
       tr.innerHTML = `
         <td>${item.month}</td>
-        <td class="number">¥ ${formatNumber(item.total)}</td>
+        <td class="number">¥ ${formatValueJpy(item.total)}</td>
         <td></td>
       `;
 
@@ -564,7 +572,7 @@
     });
 
     const selected = summary.find(x => x.month === selectedMonth);
-    totalValueEl.textContent = `¥ ${formatNumber(selected ? selected.total : 0)}`;
+    totalValueEl.textContent = `¥ ${formatValueJpy(selected ? selected.total : 0)}`;
     totalCaptionEl.textContent = selectedMonth ? `Selected month: ${selectedMonth}` : '';
   }
 
@@ -596,9 +604,9 @@
         <td>${row.record_date || ''}</td>
         <td>${row.asset_category || ''}</td>
         <td>${row.asset_name || ''}</td>
-        <td class="number">${formatNumber(amount)}</td>
-        <td class="number">${formatNumber(unitPrice)}</td>
-        <td class="number">${formatNumber(value)}</td>
+        <td class="number">${formatValueJpy(amount)}</td>
+        <td class="number">${formatUnitPrice(unitPrice)}</td>
+        <td class="number">${formatValueJpy(value)}</td>
         <td></td>
       `;
 
