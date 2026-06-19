@@ -38,6 +38,74 @@
       margin-top: 8px;
     }
 
+    form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input, select, button {
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #666;
+    }
+
+    button {
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+      min-width: 120px;
+    }
+
+    button:hover {
+      background: #000;
+    }
+
+    button:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .success {
+      color: #0a7a28;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    .error {
+      color: #c62828;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -58,14 +126,16 @@
       text-align: right;
     }
 
-    #error {
-      color: red;
-      margin-top: 12px;
-      white-space: pre-wrap;
+    .section-note {
+      margin-top: 8px;
+      color: #666;
+      font-size: 13px;
     }
 
-    .loading {
-      color: #666;
+    @media (max-width: 800px) {
+      form {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -77,7 +147,63 @@
 
   <div class="card">
     <h2>Total Asset Value</h2>
-    <div id="totalValue" class="summary-value loading">Loading...</div>
+    <div id="totalValue" class="summary-value">Loading...</div>
+  </div>
+
+  <div class="card">
+    <h2>Add Asset Record</h2>
+    <form id="assetForm">
+      <div class="form-group">
+        <label for="recordDate">Record Date</label>
+        <input type="date" id="recordDate" required />
+      </div>
+
+      <div class="form-group">
+        <label for="assetCategory">Category</label>
+        <select id="assetCategory" required>
+          <option value="">Select category</option>
+          <option value="Cash">Cash</option>
+          <option value="Bank">Bank</option>
+          <option value="Securities">Securities</option>
+          <option value="Point">Point</option>
+          <option value="Mile">Mile</option>
+          <option value="Pension">Pension</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="assetName">Asset Name</label>
+        <input type="text" id="assetName" placeholder="e.g. Wallet, Japan Post Bank, Rakuten Point" required />
+      </div>
+
+      <div class="form-group">
+        <label for="amount">Amount</label>
+        <input type="number" id="amount" step="0.01" min="0" placeholder="e.g. 40000" required />
+      </div>
+
+      <div class="form-group">
+        <label for="unitPriceJpy">Unit Price (JPY)</label>
+        <input type="number" id="unitPriceJpy" step="0.0001" min="0" placeholder="e.g. 1 or 1.5" required />
+      </div>
+
+      <div class="form-group">
+        <label>Calculated Value (JPY)</label>
+        <input type="text" id="calculatedValue" value="" readonly />
+      </div>
+
+      <div class="button-row full-width">
+        <button type="submit" id="saveButton">Save</button>
+        <button type="button" id="clearButton">Clear</button>
+      </div>
+
+      <div id="formSuccess" class="success full-width"></div>
+      <div id="formError" class="error full-width"></div>
+    </form>
+
+    <div class="section-note">
+      Value (JPY) is calculated as Amount × Unit Price (JPY).
+    </div>
   </div>
 
   <div class="card">
@@ -95,7 +221,7 @@
       </thead>
       <tbody id="assetTableBody"></tbody>
     </table>
-    <div id="error"></div>
+    <div id="tableError" class="error"></div>
   </div>
 
   <script>
@@ -105,19 +231,66 @@
     const { createClient } = supabase;
     const client = createClient(supabaseUrl, supabaseKey);
 
+    const recordDateEl = document.getElementById('recordDate');
+    const assetCategoryEl = document.getElementById('assetCategory');
+    const assetNameEl = document.getElementById('assetName');
+    const amountEl = document.getElementById('amount');
+    const unitPriceJpyEl = document.getElementById('unitPriceJpy');
+    const calculatedValueEl = document.getElementById('calculatedValue');
+    const assetFormEl = document.getElementById('assetForm');
+    const saveButtonEl = document.getElementById('saveButton');
+    const clearButtonEl = document.getElementById('clearButton');
+    const formSuccessEl = document.getElementById('formSuccess');
+    const formErrorEl = document.getElementById('formError');
+    const totalValueEl = document.getElementById('totalValue');
+    const assetTableBodyEl = document.getElementById('assetTableBody');
+    const tableErrorEl = document.getElementById('tableError');
+
     function formatNumber(value) {
       if (value === null || value === undefined || value === '') return '';
       return Number(value).toLocaleString();
     }
 
-    async function loadAssets() {
-      const totalValueEl = document.getElementById('totalValue');
-      const tableBody = document.getElementById('assetTableBody');
-      const errorEl = document.getElementById('error');
+    function calculateValue() {
+      const amount = Number(amountEl.value || 0);
+      const unitPrice = Number(unitPriceJpyEl.value || 0);
+      const value = amount * unitPrice;
+      calculatedValueEl.value = formatNumber(value);
+    }
 
+    function setDefaultDateToMonthEnd() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const lastDay = new Date(year, month + 1, 0);
+
+      const yyyy = lastDay.getFullYear();
+      const mm = String(lastDay.getMonth() + 1).padStart(2, '0');
+      const dd = String(lastDay.getDate()).padStart(2, '0');
+
+      recordDateEl.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    function clearMessages() {
+      formSuccessEl.textContent = '';
+      formErrorEl.textContent = '';
+      tableErrorEl.textContent = '';
+    }
+
+    function clearForm() {
+      setDefaultDateToMonthEnd();
+      assetCategoryEl.value = '';
+      assetNameEl.value = '';
+      amountEl.value = '';
+      unitPriceJpyEl.value = '';
+      calculatedValueEl.value = '';
+      clearMessages();
+    }
+
+    async function loadAssets() {
+      tableErrorEl.textContent = '';
+      assetTableBodyEl.innerHTML = '';
       totalValueEl.textContent = 'Loading...';
-      tableBody.innerHTML = '';
-      errorEl.textContent = '';
 
       const { data, error } = await client
         .from('assets')
@@ -128,7 +301,7 @@
 
       if (error) {
         totalValueEl.textContent = '-';
-        errorEl.textContent = 'Error loading data:\n' + error.message;
+        tableErrorEl.textContent = 'Error loading data: ' + error.message;
         return;
       }
 
@@ -149,12 +322,68 @@
           <td class="number">${formatNumber(unitPrice)}</td>
           <td class="number">${formatNumber(valueJpy)}</td>
         `;
-        tableBody.appendChild(tr);
+        assetTableBodyEl.appendChild(tr);
       });
 
       totalValueEl.textContent = '¥ ' + formatNumber(total);
     }
 
+    async function insertAssetRecord(event) {
+      event.preventDefault();
+      clearMessages();
+
+      const record_date = recordDateEl.value;
+      const asset_category = assetCategoryEl.value;
+      const asset_name = assetNameEl.value.trim();
+      const amount = Number(amountEl.value);
+      const unit_price_jpy = Number(unitPriceJpyEl.value);
+
+      if (!record_date || !asset_category || !asset_name) {
+        formErrorEl.textContent = 'Please fill in Record Date, Category, and Asset Name.';
+        return;
+      }
+
+      if (Number.isNaN(amount) || Number.isNaN(unit_price_jpy)) {
+        formErrorEl.textContent = 'Please enter valid numeric values for Amount and Unit Price.';
+        return;
+      }
+
+      saveButtonEl.disabled = true;
+      saveButtonEl.textContent = 'Saving...';
+
+      const { error } = await client
+        .from('assets')
+        .insert([
+          {
+            record_date,
+            asset_category,
+            asset_name,
+            amount,
+            unit_price_jpy
+          }
+        ]);
+
+      if (error) {
+        formErrorEl.textContent = 'Error saving data: ' + error.message;
+        saveButtonEl.disabled = false;
+        saveButtonEl.textContent = 'Save';
+        return;
+      }
+
+      formSuccessEl.textContent = 'Saved successfully.';
+      saveButtonEl.disabled = false;
+      saveButtonEl.textContent = 'Save';
+
+      clearForm();
+      await loadAssets();
+    }
+
+    amountEl.addEventListener('input', calculateValue);
+    unitPriceJpyEl.addEventListener('input', calculateValue);
+    assetFormEl.addEventListener('submit', insertAssetRecord);
+    clearButtonEl.addEventListener('click', clearForm);
+
+    setDefaultDateToMonthEnd();
     loadAssets();
   </script>
 </body>
