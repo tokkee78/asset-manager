@@ -176,6 +176,24 @@
       font-size: 13px;
     }
 
+    .empty-message {
+      color: #666;
+      font-style: italic;
+      padding: 16px 0 0 0;
+    }
+
+    .selected-row {
+      background: #eef6ff;
+    }
+
+    .month-button {
+      background: #0a4d8c;
+    }
+
+    .month-button:hover {
+      background: #083a6a;
+    }
+
     @media (max-width: 800px) {
       form {
         grid-template-columns: 1fr;
@@ -190,8 +208,24 @@
   </div>
 
   <div class="card">
-    <h2>Total Asset Value</h2>
+    <h2>Selected Month Total Asset Value</h2>
     <div id="totalValue" class="summary-value">Loading...</div>
+    <div id="totalValueCaption" class="section-note"></div>
+  </div>
+
+  <div class="card">
+    <h2>Monthly Summary</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Total Asset Value (JPY)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="monthSummaryBody"></tbody>
+    </table>
+    <div id="monthSummaryEmpty" class="empty-message"></div>
   </div>
 
   <div class="card">
@@ -255,7 +289,8 @@
   </div>
 
   <div class="card">
-    <h2>Asset List</h2>
+    <h2>Selected Month Details</h2>
+    <div id="detailCaption" class="section-note"></div>
     <table>
       <thead>
         <tr>
@@ -270,6 +305,7 @@
       </thead>
       <tbody id="assetTableBody"></tbody>
     </table>
+    <div id="emptyMessage" class="empty-message"></div>
     <div id="tableError" class="error"></div>
   </div>
 
@@ -294,15 +330,26 @@
     const formSuccessEl = document.getElementById('formSuccess');
     const formErrorEl = document.getElementById('formError');
     const totalValueEl = document.getElementById('totalValue');
+    const totalValueCaptionEl = document.getElementById('totalValueCaption');
+    const monthSummaryBodyEl = document.getElementById('monthSummaryBody');
+    const monthSummaryEmptyEl = document.getElementById('monthSummaryEmpty');
+    const detailCaptionEl = document.getElementById('detailCaption');
     const assetTableBodyEl = document.getElementById('assetTableBody');
+    const emptyMessageEl = document.getElementById('emptyMessage');
     const tableErrorEl = document.getElementById('tableError');
 
     let editingId = null;
     let assetRows = [];
+    let selectedMonth = '';
 
     function formatNumber(value) {
       if (value === null || value === undefined || value === '') return '';
       return Number(value).toLocaleString();
+    }
+
+    function getRecordMonth(recordDate) {
+      if (!recordDate || recordDate.length < 7) return '';
+      return recordDate.slice(0, 7);
     }
 
     function calculateValue() {
@@ -371,10 +418,184 @@
       clearMessages();
     }
 
+    function getMonthlySummary(rows) {
+      const summaryMap = new Map();
+
+      rows.forEach(row => {
+        const month = getRecordMonth(row.record_date);
+        if (!month) return;
+
+        const valueJpy = Number(row.amount || 0) * Number(row.unit_price_jpy || 0);
+
+        if (!summaryMap.has(month)) {
+          summaryMap.set(month, 0);
+        }
+
+        summaryMap.set(month, summaryMap.get(month) + valueJpy);
+      });
+
+      return [...summaryMap.entries()]
+        .map(([month, totalValue]) => ({ month, totalValue }))
+        .sort((a, b) => b.month.localeCompare(a.month));
+    }
+
+    function ensureSelectedMonth(summaryRows) {
+      if (summaryRows.length === 0) {
+        selectedMonth = '';
+        return;
+      }
+
+      const availableMonths = summaryRows.map(row => row.month);
+
+      if (!selectedMonth || !availableMonths.includes(selectedMonth)) {
+        selectedMonth = availableMonths[0];
+      }
+    }
+
+    function renderMonthlySummary() {
+      monthSummaryBodyEl.innerHTML = '';
+      monthSummaryEmptyEl.textContent = '';
+
+      const summaryRows = getMonthlySummary(assetRows);
+      ensureSelectedMonth(summaryRows);
+
+      if (summaryRows.length === 0) {
+        monthSummaryEmptyEl.textContent = 'No monthly summary data found.';
+        totalValueEl.textContent = '¥ 0';
+        totalValueCaptionEl.textContent = '';
+        detailCaptionEl.textContent = '';
+        return;
+      }
+
+      summaryRows.forEach(summary => {
+        const tr = document.createElement('tr');
+
+        if (summary.month === selectedMonth) {
+          tr.classList.add('selected-row');
+        }
+
+        const viewButton = document.createElement('button');
+        viewButton.type = 'button';
+        viewButton.textContent = 'View Details';
+        viewButton.className = 'small-button month-button';
+        viewButton.addEventListener('click', () => {
+          selectedMonth = summary.month;
+          renderAll();
+        });
+
+        tr.innerHTML = `
+          <td>${summary.month}</td>
+          <td class="number">¥ ${formatNumber(summary.totalValue)}</td>
+        `;
+
+        const actionTd = document.createElement('td');
+        actionTd.appendChild(viewButton);
+        tr.appendChild(actionTd);
+
+        monthSummaryBodyEl.appendChild(tr);
+      });
+
+      const selectedSummary = summaryRows.find(row => row.month === selectedMonth);
+      const selectedTotal = selectedSummary ? selectedSummary.totalValue : 0;
+
+      totalValueEl.textContent = '¥ ' + formatNumber(selectedTotal);
+      totalValueCaptionEl.textContent = selectedMonth
+        ? `Selected month: ${selectedMonth}`
+        : '';
+    }
+
+    function getSelectedMonthRows() {
+      if (!selectedMonth) return [];
+      return assetRows.filter(row => getRecordMonth(row.record_date) === selectedMonth);
+    }
+
+    function renderDetails() {
+      assetTableBodyEl.innerHTML = '';
+      emptyMessageEl.textContent = '';
+      tableErrorEl.textContent = '';
+
+      const filteredRows = getSelectedMonthRows();
+
+      detailCaptionEl.textContent = selectedMonth
+        ? `Showing details for ${selectedMonth}`
+        : '';
+
+      if (filteredRows.length === 0) {
+        emptyMessageEl.textContent = selectedMonth
+          ? `No asset records found for ${selectedMonth}.`
+          : 'No asset records found.';
+        return;
+      }
+
+      filteredRows
+        .sort((a, b) => {
+          if (a.record_date !== b.record_date) {
+            return b.record_date.localeCompare(a.record_date);
+          }
+          if (a.asset_category !== b.asset_category) {
+            return a.asset_category.localeCompare(b.asset_category);
+          }
+          return a.asset_name.localeCompare(b.asset_name);
+        })
+        .forEach((row) => {
+          const amount = Number(row.amount || 0);
+          const unitPrice = Number(row.unit_price_jpy || 0);
+          const valueJpy = amount * unitPrice;
+
+          const tr = document.createElement('tr');
+
+          const editButton = document.createElement('button');
+          editButton.type = 'button';
+          editButton.textContent = 'Edit';
+          editButton.className = 'small-button secondary-button';
+          editButton.addEventListener('click', () => {
+            setEditMode(row);
+          });
+
+          const deleteButton = document.createElement('button');
+          deleteButton.type = 'button';
+          deleteButton.textContent = 'Delete';
+          deleteButton.className = 'small-button danger-button';
+          deleteButton.addEventListener('click', async () => {
+            await deleteAsset(row.id, row.asset_name);
+          });
+
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'actions';
+          actionsDiv.appendChild(editButton);
+          actionsDiv.appendChild(deleteButton);
+
+          tr.innerHTML = `
+            <td>${row.record_date ?? ''}</td>
+            <td>${row.asset_category ?? ''}</td>
+            <td>${row.asset_name ?? ''}</td>
+            <td class="number">${formatNumber(amount)}</td>
+            <td class="number">${formatNumber(unitPrice)}</td>
+            <td class="number">${formatNumber(valueJpy)}</td>
+          `;
+
+          const actionsTd = document.createElement('td');
+          actionsTd.appendChild(actionsDiv);
+          tr.appendChild(actionsTd);
+
+          assetTableBodyEl.appendChild(tr);
+        });
+    }
+
+    function renderAll() {
+      renderMonthlySummary();
+      renderDetails();
+    }
+
     async function loadAssets() {
       tableErrorEl.textContent = '';
       assetTableBodyEl.innerHTML = '';
+      monthSummaryBodyEl.innerHTML = '';
+      emptyMessageEl.textContent = '';
+      monthSummaryEmptyEl.textContent = '';
       totalValueEl.textContent = 'Loading...';
+      totalValueCaptionEl.textContent = '';
+      detailCaptionEl.textContent = '';
 
       const { data, error } = await client
         .from('assets')
@@ -390,55 +611,7 @@
       }
 
       assetRows = data || [];
-
-      let total = 0;
-
-      assetRows.forEach((row) => {
-        const amount = Number(row.amount || 0);
-        const unitPrice = Number(row.unit_price_jpy || 0);
-        const valueJpy = amount * unitPrice;
-        total += valueJpy;
-
-        const tr = document.createElement('tr');
-
-        const editButton = document.createElement('button');
-        editButton.type = 'button';
-        editButton.textContent = 'Edit';
-        editButton.className = 'small-button secondary-button';
-        editButton.addEventListener('click', () => {
-          setEditMode(row);
-        });
-
-        const deleteButton = document.createElement('button');
-        deleteButton.type = 'button';
-        deleteButton.textContent = 'Delete';
-        deleteButton.className = 'small-button danger-button';
-        deleteButton.addEventListener('click', async () => {
-          await deleteAsset(row.id, row.asset_name);
-        });
-
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'actions';
-        actionsDiv.appendChild(editButton);
-        actionsDiv.appendChild(deleteButton);
-
-        tr.innerHTML = `
-          <td>${row.record_date ?? ''}</td>
-          <td>${row.asset_category ?? ''}</td>
-          <td>${row.asset_name ?? ''}</td>
-          <td class="number">${formatNumber(amount)}</td>
-          <td class="number">${formatNumber(unitPrice)}</td>
-          <td class="number">${formatNumber(valueJpy)}</td>
-        `;
-
-        const actionsTd = document.createElement('td');
-        actionsTd.appendChild(actionsDiv);
-        tr.appendChild(actionsTd);
-
-        assetTableBodyEl.appendChild(tr);
-      });
-
-      totalValueEl.textContent = '¥ ' + formatNumber(total);
+      renderAll();
     }
 
     async function saveAssetRecord(event) {
@@ -486,52 +659,3 @@
       if (response.error) {
         formErrorEl.textContent = 'Error saving data: ' + response.error.message;
         saveButtonEl.disabled = false;
-        saveButtonEl.textContent = editingId === null ? 'Save' : 'Update';
-        return;
-      }
-
-      formSuccessEl.textContent = editingId === null
-        ? 'Saved successfully.'
-        : 'Updated successfully.';
-
-      saveButtonEl.disabled = false;
-      saveButtonEl.textContent = editingId === null ? 'Save' : 'Update';
-
-      clearForm();
-      await loadAssets();
-    }
-
-    async function deleteAsset(id, assetName) {
-      clearMessages();
-
-      const confirmed = window.confirm(`Delete this record?\n\nAsset Name: ${assetName}\nID: ${id}`);
-      if (!confirmed) return;
-
-      const { error } = await client
-        .from('assets')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        tableErrorEl.textContent = 'Error deleting data: ' + error.message;
-        return;
-      }
-
-      if (editingId === id) {
-        clearForm();
-      }
-
-      formSuccessEl.textContent = 'Deleted successfully.';
-      await loadAssets();
-    }
-
-    amountEl.addEventListener('input', calculateValue);
-    unitPriceJpyEl.addEventListener('input', calculateValue);
-    assetFormEl.addEventListener('submit', saveAssetRecord);
-    clearButtonEl.addEventListener('click', clearForm);
-
-    clearForm();
-    loadAssets();
-  </script>
-</body>
-</html>
