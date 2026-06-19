@@ -270,7 +270,9 @@
 
         <div class="form-group">
           <label for="assetName">Asset Name</label>
-          <input type="text" id="assetName" placeholder="e.g. Wallet, Japan Post Bank, Rakuten Point" required />
+          <select id="assetName" required>
+            <option value="">Select asset name</option>
+          </select>
         </div>
 
         <div class="form-group">
@@ -370,6 +372,62 @@
     let editingId = null;
     let currentUser = null;
 
+const assetOptions = {
+  Cash: [
+    '手持ち'
+  ],
+  Bank: [
+    'ゆうちょ銀行',
+    'みずほ銀行',
+    '共通口座',
+    'イオン銀行',
+    'JRE BANK',
+    'SBI銀行'
+  ],
+  Securities: [
+    'SBI証券',
+    'SMBC日興証券',
+    'クラウドクレジット',
+    'DMM FX'
+  ],
+  Pension: [
+    '拠出型年金'
+  ],
+  Mile: [
+    'JALマイル',
+    'ANAマイル'
+  ],
+  Point: [
+    'ANAコイン',
+    'e-JALポイント',
+    'メトポ',
+    '楽天ポイント',
+    'JRE POINT',
+    'WAON POINT'
+  ],
+  Other: []
+};
+
+function populateAssetNameOptions(category, selectedValue = '') {
+  assetNameEl.innerHTML = '';
+
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'Select asset name';
+  assetNameEl.appendChild(defaultOption);
+
+  const options = assetOptions[category] || [];
+
+  options.forEach(name => {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
+    assetNameEl.appendChild(option);
+  });
+
+  assetNameEl.value = selectedValue || '';
+}
+    
     function formatNumber(value) {
       return Number(value || 0).toLocaleString();
     }
@@ -413,7 +471,7 @@
 
       recordDateEl.value = monthEndToday();
       assetCategoryEl.value = '';
-      assetNameEl.value = '';
+      populateAssetNameOptions('', '');
       amountEl.value = '';
       unitPriceJpyEl.value = '';
       calculatedValueEl.value = '';
@@ -430,7 +488,10 @@
 
       recordDateEl.value = row.record_date || '';
       assetCategoryEl.value = row.asset_category || '';
-      assetNameEl.value = row.asset_name || '';
+      populateAssetNameOptions(
+        row.asset_category || '',
+        row.asset_name || ''
+      );      
       amountEl.value = row.amount || '';
       unitPriceJpyEl.value = row.unit_price_jpy || '';
       calculateValue();
@@ -732,11 +793,19 @@
 
     amountEl.addEventListener('input', calculateValue);
     unitPriceJpyEl.addEventListener('input', calculateValue);
+    assetCategoryEl.addEventListener('change', () => {
+      populateAssetNameOptions(
+        assetCategoryEl.value,
+        ''
+      );
+    });
+
     clearButtonEl.addEventListener('click', resetForm);
     assetFormEl.addEventListener('submit', saveRecord);
     sendMagicLinkButtonEl.addEventListener('click', sendMagicLink);
     logoutButtonEl.addEventListener('click', logout);
 
+    populateAssetNameOptions('', '');
     resetForm();
     initializeAuth();
   </script>
