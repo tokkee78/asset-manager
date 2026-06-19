@@ -102,6 +102,7 @@
       display: flex;
       gap: 12px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .success {
@@ -164,6 +165,14 @@
       padding-top: 12px;
     }
 
+    .hidden {
+      display: none;
+    }
+
+    .auth-user {
+      font-weight: bold;
+    }
+
     @media (max-width: 800px) {
       form {
         grid-template-columns: 1fr;
@@ -177,106 +186,142 @@
     <div class="muted">Asset records loaded from Supabase</div>
   </div>
 
+  <!-- Auth Area -->
   <div class="card">
-    <h2>Selected Month Total Asset Value</h2>
-    <div id="totalValue" class="summary-value">Loading...</div>
-    <div id="totalCaption" class="section-note"></div>
-  </div>
+    <h2>Authentication</h2>
 
-  <div class="card">
-    <h2>Monthly Summary</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Month</th>
-          <th>Total Asset Value (JPY)</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="monthSummaryBody"></tbody>
-    </table>
-    <div id="monthSummaryEmpty" class="empty-message"></div>
-  </div>
-
-  <div class="card">
-    <h2>
-      <span id="formTitle">Add Asset Record</span>
-      <span id="formModeBadge" class="mode-badge" style="display:none;"></span>
-    </h2>
-
-    <form id="assetForm">
-      <div class="form-group">
-        <label for="recordDate">Record Date</label>
-        <input type="date" id="recordDate" required />
+    <div id="loggedOutArea">
+      <div class="form-group" style="max-width: 420px;">
+        <label for="emailInput">Email Address</label>
+        <input type="email" id="emailInput" placeholder="your-email@example.com" />
       </div>
 
-      <div class="form-group">
-        <label for="assetCategory">Category</label>
-        <select id="assetCategory" required>
-          <option value="">Select category</option>
-          <option value="Cash">Cash</option>
-          <option value="Bank">Bank</option>
-          <option value="Securities">Securities</option>
-          <option value="Point">Point</option>
-          <option value="Mile">Mile</option>
-          <option value="Pension">Pension</option>
-          <option value="Other">Other</option>
-        </select>
+      <div class="button-row" style="margin-top: 16px;">
+        <button type="button" id="sendMagicLinkButton">Send Magic Link</button>
       </div>
 
-      <div class="form-group">
-        <label for="assetName">Asset Name</label>
-        <input type="text" id="assetName" placeholder="e.g. Wallet, Japan Post Bank, Rakuten Point" required />
+      <div id="authSuccess" class="success"></div>
+      <div id="authError" class="error"></div>
+
+      <div class="section-note" style="margin-top: 12px;">
+        Enter your email address and click <strong>Send Magic Link</strong>.  
+        Then open the email and click the sign-in link.
       </div>
+    </div>
 
-      <div class="form-group">
-        <label for="amount">Amount</label>
-        <input type="number" id="amount" step="0.01" min="0" placeholder="e.g. 40000" required />
+    <div id="loggedInArea" class="hidden">
+      <div class="section-note">Logged in as</div>
+      <div id="currentUserEmail" class="auth-user"></div>
+
+      <div class="button-row" style="margin-top: 16px;">
+        <button type="button" id="logoutButton" class="secondary-button">Logout</button>
       </div>
-
-      <div class="form-group">
-        <label for="unitPriceJpy">Unit Price (JPY)</label>
-        <input type="number" id="unitPriceJpy" step="0.0001" min="0" placeholder="e.g. 1 or 1.5" required />
-      </div>
-
-      <div class="form-group">
-        <label for="calculatedValue">Calculated Value (JPY)</label>
-        <input type="text" id="calculatedValue" readonly />
-      </div>
-
-      <div class="button-row full-width">
-        <button type="submit" id="saveButton">Save</button>
-        <button type="button" id="clearButton" class="secondary-button">Clear</button>
-      </div>
-
-      <div id="formSuccess" class="success full-width"></div>
-      <div id="formError" class="error full-width"></div>
-    </form>
-
-    <div class="section-note">
-      Value (JPY) is calculated as Amount × Unit Price (JPY).
     </div>
   </div>
 
-  <div class="card">
-    <h2>Selected Month Details</h2>
-    <div id="detailCaption" class="section-note"></div>
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Category</th>
-          <th>Asset Name</th>
-          <th>Amount</th>
-          <th>Unit Price (JPY)</th>
-          <th>Value (JPY)</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="assetTableBody"></tbody>
-    </table>
-    <div id="emptyMessage" class="empty-message"></div>
-    <div id="tableError" class="error"></div>
+  <!-- App Area -->
+  <div id="appArea" class="hidden">
+    <div class="card">
+      <h2>Selected Month Total Asset Value</h2>
+      <div id="totalValue" class="summary-value">Loading...</div>
+      <div id="totalCaption" class="section-note"></div>
+    </div>
+
+    <div class="card">
+      <h2>Monthly Summary</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Total Asset Value (JPY)</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="monthSummaryBody"></tbody>
+      </table>
+      <div id="monthSummaryEmpty" class="empty-message"></div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <span id="formTitle">Add Asset Record</span>
+        <span id="formModeBadge" class="mode-badge hidden"></span>
+      </h2>
+
+      <form id="assetForm">
+        <div class="form-group">
+          <label for="recordDate">Record Date</label>
+          <input type="date" id="recordDate" required />
+        </div>
+
+        <div class="form-group">
+          <label for="assetCategory">Category</label>
+          <select id="assetCategory" required>
+            <option value="">Select category</option>
+            <option value="Cash">Cash</option>
+            <option value="Bank">Bank</option>
+            <option value="Securities">Securities</option>
+            <option value="Point">Point</option>
+            <option value="Mile">Mile</option>
+            <option value="Pension">Pension</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="assetName">Asset Name</label>
+          <input type="text" id="assetName" placeholder="e.g. Wallet, Japan Post Bank, Rakuten Point" required />
+        </div>
+
+        <div class="form-group">
+          <label for="amount">Amount</label>
+          <input type="number" id="amount" step="0.01" min="0" placeholder="e.g. 40000" required />
+        </div>
+
+        <div class="form-group">
+          <label for="unitPriceJpy">Unit Price (JPY)</label>
+          <input type="number" id="unitPriceJpy" step="0.0001" min="0" placeholder="e.g. 1 or 1.5" required />
+        </div>
+
+        <div class="form-group">
+          <label for="calculatedValue">Calculated Value (JPY)</label>
+          <input type="text" id="calculatedValue" readonly />
+        </div>
+
+        <div class="button-row full-width">
+          <button type="submit" id="saveButton">Save</button>
+          <button type="button" id="clearButton" class="secondary-button">Clear</button>
+        </div>
+
+        <div id="formSuccess" class="success full-width"></div>
+        <div id="formError" class="error full-width"></div>
+      </form>
+
+      <div class="section-note">
+        Value (JPY) is calculated as Amount × Unit Price (JPY).
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Selected Month Details</h2>
+      <div id="detailCaption" class="section-note"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Asset Name</th>
+            <th>Amount</th>
+            <th>Unit Price (JPY)</th>
+            <th>Value (JPY)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="assetTableBody"></tbody>
+      </table>
+      <div id="emptyMessage" class="empty-message"></div>
+      <div id="tableError" class="error"></div>
+    </div>
   </div>
 
   <script>
@@ -285,6 +330,18 @@
     const { createClient } = supabase;
     const client = createClient(supabaseUrl, supabaseKey);
 
+    // Auth elements
+    const loggedOutAreaEl = document.getElementById('loggedOutArea');
+    const loggedInAreaEl = document.getElementById('loggedInArea');
+    const appAreaEl = document.getElementById('appArea');
+    const emailInputEl = document.getElementById('emailInput');
+    const sendMagicLinkButtonEl = document.getElementById('sendMagicLinkButton');
+    const logoutButtonEl = document.getElementById('logoutButton');
+    const currentUserEmailEl = document.getElementById('currentUserEmail');
+    const authSuccessEl = document.getElementById('authSuccess');
+    const authErrorEl = document.getElementById('authError');
+
+    // App elements
     const totalValueEl = document.getElementById('totalValue');
     const totalCaptionEl = document.getElementById('totalCaption');
     const monthSummaryBodyEl = document.getElementById('monthSummaryBody');
@@ -311,6 +368,7 @@
     let assetRows = [];
     let selectedMonth = '';
     let editingId = null;
+    let currentUser = null;
 
     function formatNumber(value) {
       return Number(value || 0).toLocaleString();
@@ -341,10 +399,15 @@
       tableErrorEl.textContent = '';
     }
 
+    function clearAuthMessages() {
+      authSuccessEl.textContent = '';
+      authErrorEl.textContent = '';
+    }
+
     function resetForm() {
       editingId = null;
       formTitleEl.textContent = 'Add Asset Record';
-      formModeBadgeEl.style.display = 'none';
+      formModeBadgeEl.classList.add('hidden');
       formModeBadgeEl.textContent = '';
       saveButtonEl.textContent = 'Save';
 
@@ -361,7 +424,7 @@
     function setEditMode(row) {
       editingId = row.id;
       formTitleEl.textContent = 'Edit Asset Record';
-      formModeBadgeEl.style.display = 'inline-block';
+      formModeBadgeEl.classList.remove('hidden');
       formModeBadgeEl.textContent = `Editing ID: ${row.id}`;
       saveButtonEl.textContent = 'Update';
 
@@ -374,6 +437,20 @@
 
       clearMessages();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateAuthUI() {
+      if (currentUser) {
+        loggedOutAreaEl.classList.add('hidden');
+        loggedInAreaEl.classList.remove('hidden');
+        appAreaEl.classList.remove('hidden');
+        currentUserEmailEl.textContent = currentUser.email || '';
+      } else {
+        loggedOutAreaEl.classList.remove('hidden');
+        loggedInAreaEl.classList.add('hidden');
+        appAreaEl.classList.add('hidden');
+        currentUserEmailEl.textContent = '';
+      }
     }
 
     function getMonthlySummary(rows) {
@@ -449,12 +526,11 @@
       emptyMessageEl.textContent = '';
       detailCaptionEl.textContent = selectedMonth ? `Showing details for ${selectedMonth}` : '';
 
-      const rows = getSelectedRows()
-        .sort((a, b) => {
-          if (a.record_date !== b.record_date) return b.record_date.localeCompare(a.record_date);
-          if (a.asset_category !== b.asset_category) return a.asset_category.localeCompare(b.asset_category);
-          return a.asset_name.localeCompare(b.asset_name);
-        });
+      const rows = getSelectedRows().sort((a, b) => {
+        if (a.record_date !== b.record_date) return b.record_date.localeCompare(a.record_date);
+        if (a.asset_category !== b.asset_category) return a.asset_category.localeCompare(b.asset_category);
+        return a.asset_name.localeCompare(b.asset_name);
+      });
 
       if (!rows.length) {
         emptyMessageEl.textContent = selectedMonth
@@ -526,9 +602,7 @@
           .from('assets')
           .select('id, record_date, asset_category, asset_name, amount, unit_price_jpy');
 
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
         assetRows = data || [];
         renderSummary();
@@ -587,13 +661,84 @@
       }
     }
 
+    async function sendMagicLink() {
+      clearAuthMessages();
+
+      const email = emailInputEl.value.trim();
+      if (!email) {
+        authErrorEl.textContent = 'Please enter your email address.';
+        return;
+      }
+
+      sendMagicLinkButtonEl.disabled = true;
+      sendMagicLinkButtonEl.textContent = 'Sending...';
+
+      const { error } = await client.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: 'https://tokkee78.github.io/asset-manager/'
+        }
+      });
+
+      if (error) {
+        authErrorEl.textContent = 'Error sending Magic Link: ' + error.message;
+      } else {
+        authSuccessEl.textContent = 'Magic Link sent. Please check your email.';
+      }
+
+      sendMagicLinkButtonEl.disabled = false;
+      sendMagicLinkButtonEl.textContent = 'Send Magic Link';
+    }
+
+    async function logout() {
+      clearAuthMessages();
+      const { error } = await client.auth.signOut();
+
+      if (error) {
+        authErrorEl.textContent = 'Error logging out: ' + error.message;
+        return;
+      }
+
+      currentUser = null;
+      updateAuthUI();
+    }
+
+    async function initializeAuth() {
+      const { data, error } = await client.auth.getUser();
+
+      if (error) {
+        console.error(error);
+      }
+
+      currentUser = data?.user ?? null;
+      updateAuthUI();
+
+      if (currentUser) {
+        await loadAssets();
+      }
+    }
+
+    client.auth.onAuthStateChange(async (_event, session) => {
+      currentUser = session?.user ?? null;
+      updateAuthUI();
+
+      if (currentUser) {
+        await loadAssets();
+      } else {
+        assetRows = [];
+        selectedMonth = '';
+      }
+    });
+
     amountEl.addEventListener('input', calculateValue);
     unitPriceJpyEl.addEventListener('input', calculateValue);
     clearButtonEl.addEventListener('click', resetForm);
     assetFormEl.addEventListener('submit', saveRecord);
+    sendMagicLinkButtonEl.addEventListener('click', sendMagicLink);
+    logoutButtonEl.addEventListener('click', logout);
 
     resetForm();
-    loadAssets();
+    initializeAuth();
   </script>
 </body>
 </html>
