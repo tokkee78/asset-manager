@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Personal Asset Manager</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><text y=%2214%22 font-size=%2214%22>💰</text></svg>">
 
   <style>
     body {
@@ -109,6 +108,7 @@
       gap: 12px;
       align-items: center;
       flex-wrap: wrap;
+      margin-top: 16px;
     }
 
     .success {
@@ -191,7 +191,7 @@
     <h1>
       Personal Asset Manager
       <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">
-        v1.2.1
+        v1.2.2
       </span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
@@ -207,4 +207,623 @@
         <input type="email" id="emailInput" placeholder="your-email@example.com" />
       </div>
 
-      <div class="button-row" style="margin-top: 16px;">
+      <div class="button-row">
+        <button type="button" id="sendMagicLinkButton">Send Magic Link</button>
+      </div>
+
+      <div id="authSuccess" class="success"></div>
+      <div id="authError" class="error"></div>
+
+      <div class="section-note" style="margin-top: 12px;">
+        Enter your email address and click <strong>Send Magic Link</strong>.
+        Then open the email and click the sign-in link.
+      </div>
+    </div>
+
+    <div id="loggedInArea" class="hidden">
+      <div class="section-note">Logged in as</div>
+      <div id="currentUserEmail" class="auth-user"></div>
+
+      <div class="button-row">
+        <button type="button" id="logoutButton" class="secondary-button">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Area -->
+  <div id="appArea" class="hidden">
+    <div class="card">
+      <h2>Selected Month Total Asset Value</h2>
+      <div id="totalValue" class="summary-value">Loading...</div>
+      <div id="totalCaption" class="section-note"></div>
+    </div>
+
+    <div class="card">
+      <h2>Monthly Summary</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Total Asset Value (JPY)</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="monthSummaryBody"></tbody>
+      </table>
+      <div id="monthSummaryEmpty" class="empty-message"></div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <span id="formTitle">Add Asset Record</span>
+        <span id="formModeBadge" class="mode-badge hidden"></span>
+      </h2>
+
+      <form id="assetForm">
+        <div class="form-group">
+          <label for="recordDate">Record Date</label>
+          <input type="date" id="recordDate" required />
+        </div>
+
+        <div class="form-group">
+          <label for="assetCategory">Category</label>
+          <select id="assetCategory" required>
+            <option value="">Select category</option>
+            <option value="Cash">Cash</option>
+            <option value="Bank">Bank</option>
+            <option value="Securities">Securities</option>
+            <option value="Point">Point</option>
+            <option value="Mile">Mile</option>
+            <option value="Pension">Pension</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="assetName">Asset Name</label>
+          <select id="assetName" required>
+            <option value="">Select asset name</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="amount">Amount</label>
+          <input type="number" id="amount" step="0.01" min="0" placeholder="e.g. 40000" required />
+        </div>
+
+        <div class="form-group">
+          <label for="unitPriceJpy">Unit Price (JPY)</label>
+          <input type="number" id="unitPriceJpy" step="0.0001" min="0" placeholder="e.g. 1 or 1.5" required />
+        </div>
+
+        <div class="form-group">
+          <label for="calculatedValue">Calculated Value (JPY)</label>
+          <input type="text" id="calculatedValue" readonly />
+        </div>
+
+        <div class="button-row full-width">
+          <button type="submit" id="saveButton">Save</button>
+          <button type="button" id="clearButton" class="secondary-button">Clear</button>
+        </div>
+
+        <div id="formSuccess" class="success full-width"></div>
+        <div id="formError" class="error full-width"></div>
+      </form>
+
+      <div class="section-note">
+        Value (JPY) is calculated as Amount × Unit Price (JPY).
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Selected Month Details</h2>
+      <div id="detailCaption" class="section-note"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Asset Name</th>
+            <th>Amount</th>
+            <th>Unit Price (JPY)</th>
+            <th>Value (JPY)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="assetTableBody"></tbody>
+      </table>
+      <div id="emptyMessage" class="empty-message"></div>
+      <div id="tableError" class="error"></div>
+    </div>
+  </div>
+
+<script>
+  const supabaseUrl = 'https://nowhqyugwptzjdwrknlc.supabase.co';
+  const supabaseKey = 'sb_publishable_HkqukxAoPQkaQlUH6hLZEw_rFjbzsy3';
+  const { createClient } = supabase;
+  const client = createClient(supabaseUrl, supabaseKey);
+
+  const loggedOutAreaEl = document.getElementById('loggedOutArea');
+  const loggedInAreaEl = document.getElementById('loggedInArea');
+  const appAreaEl = document.getElementById('appArea');
+  const emailInputEl = document.getElementById('emailInput');
+  const sendMagicLinkButtonEl = document.getElementById('sendMagicLinkButton');
+  const logoutButtonEl = document.getElementById('logoutButton');
+  const currentUserEmailEl = document.getElementById('currentUserEmail');
+  const authSuccessEl = document.getElementById('authSuccess');
+  const authErrorEl = document.getElementById('authError');
+
+  const totalValueEl = document.getElementById('totalValue');
+  const totalCaptionEl = document.getElementById('totalCaption');
+  const monthSummaryBodyEl = document.getElementById('monthSummaryBody');
+  const monthSummaryEmptyEl = document.getElementById('monthSummaryEmpty');
+  const detailCaptionEl = document.getElementById('detailCaption');
+  const assetTableBodyEl = document.getElementById('assetTableBody');
+  const emptyMessageEl = document.getElementById('emptyMessage');
+  const tableErrorEl = document.getElementById('tableError');
+
+  const formTitleEl = document.getElementById('formTitle');
+  const formModeBadgeEl = document.getElementById('formModeBadge');
+  const assetFormEl = document.getElementById('assetForm');
+  const recordDateEl = document.getElementById('recordDate');
+  const assetCategoryEl = document.getElementById('assetCategory');
+  const assetNameEl = document.getElementById('assetName');
+  const amountEl = document.getElementById('amount');
+  const unitPriceJpyEl = document.getElementById('unitPriceJpy');
+  const calculatedValueEl = document.getElementById('calculatedValue');
+  const saveButtonEl = document.getElementById('saveButton');
+  const clearButtonEl = document.getElementById('clearButton');
+  const formSuccessEl = document.getElementById('formSuccess');
+  const formErrorEl = document.getElementById('formError');
+
+  let assetRows = [];
+  let selectedMonth = '';
+  let editingId = null;
+  let currentUser = null;
+
+  const assetOptions = {
+    Cash: ['手持ち'],
+    Bank: ['ゆうちょ銀行', 'みずほ銀行', '共通口座', 'イオン銀行', 'JRE BANK', 'SBI銀行'],
+    Securities: ['SBI証券', 'SMBC日興証券', 'クラウドクレジット', 'DMM FX'],
+    Pension: ['拠出型年金'],
+    Mile: ['JALマイル', 'ANAマイル'],
+    Point: ['ANAコイン', 'e-JALポイント', 'メトポ', '楽天ポイント', 'JRE POINT', 'WAON POINT'],
+    Other: []
+  };
+
+  function populateAssetNameOptions(category, selectedValue = '') {
+    assetNameEl.innerHTML = '';
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select asset name';
+    assetNameEl.appendChild(defaultOption);
+
+    const options = assetOptions[category] || [];
+    options.forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      assetNameEl.appendChild(option);
+    });
+
+    if (selectedValue && !options.includes(selectedValue)) {
+      const customOption = document.createElement('option');
+      customOption.value = selectedValue;
+      customOption.textContent = selectedValue;
+      assetNameEl.appendChild(customOption);
+    }
+
+    assetNameEl.value = selectedValue || '';
+  }
+
+  function formatNumber(value) {
+    return Number(value || 0).toLocaleString();
+  }
+
+  function getMonth(recordDate) {
+    return (recordDate || '').slice(0, 7);
+  }
+
+  function monthEndToday() {
+    const now = new Date();
+    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const yyyy = last.getFullYear();
+    const mm = String(last.getMonth() + 1).padStart(2, '0');
+    const dd = String(last.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function calculateValue() {
+    const amount = Number(amountEl.value || 0);
+    const unitPrice = Number(unitPriceJpyEl.value || 0);
+    calculatedValueEl.value = formatNumber(amount * unitPrice);
+  }
+
+  function clearMessages() {
+    formSuccessEl.textContent = '';
+    formErrorEl.textContent = '';
+    tableErrorEl.textContent = '';
+  }
+
+  function clearAuthMessages() {
+    authSuccessEl.textContent = '';
+    authErrorEl.textContent = '';
+  }
+
+  function resetForm() {
+    editingId = null;
+    formTitleEl.textContent = 'Add Asset Record';
+    formModeBadgeEl.classList.add('hidden');
+    formModeBadgeEl.textContent = '';
+    saveButtonEl.textContent = 'Save';
+
+    recordDateEl.value = monthEndToday();
+    assetCategoryEl.value = '';
+    populateAssetNameOptions('', '');
+    amountEl.value = '';
+    unitPriceJpyEl.value = '';
+    calculatedValueEl.value = '';
+
+    clearMessages();
+  }
+
+  function setEditMode(row) {
+    editingId = row.id;
+    formTitleEl.textContent = 'Edit Asset Record';
+    formModeBadgeEl.classList.remove('hidden');
+    formModeBadgeEl.textContent = `Editing ID: ${row.id}`;
+    saveButtonEl.textContent = 'Update';
+
+    recordDateEl.value = row.record_date || '';
+    assetCategoryEl.value = row.asset_category || '';
+    populateAssetNameOptions(row.asset_category || '', row.asset_name || '');
+    amountEl.value = row.amount || '';
+    unitPriceJpyEl.value = row.unit_price_jpy || '';
+    calculateValue();
+
+    clearMessages();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateAuthUI() {
+    if (currentUser) {
+      loggedOutAreaEl.classList.add('hidden');
+      loggedInAreaEl.classList.remove('hidden');
+      appAreaEl.classList.remove('hidden');
+      currentUserEmailEl.textContent = currentUser.email || '';
+    } else {
+      loggedOutAreaEl.classList.remove('hidden');
+      loggedInAreaEl.classList.add('hidden');
+      appAreaEl.classList.add('hidden');
+      currentUserEmailEl.textContent = '';
+    }
+  }
+
+  function getMonthlySummary(rows) {
+    const map = new Map();
+
+    rows.forEach(row => {
+      const month = getMonth(row.record_date);
+      const value = Number(row.amount || 0) * Number(row.unit_price_jpy || 0);
+      map.set(month, (map.get(month) || 0) + value);
+    });
+
+    return [...map.entries()]
+      .map(([month, total]) => ({ month, total }))
+      .sort((a, b) => b.month.localeCompare(a.month));
+  }
+
+  function getSelectedRows() {
+    return assetRows.filter(row => getMonth(row.record_date) === selectedMonth);
+  }
+
+  function renderSummary() {
+    monthSummaryBodyEl.innerHTML = '';
+    monthSummaryEmptyEl.textContent = '';
+
+    const summary = getMonthlySummary(assetRows);
+
+    if (!summary.length) {
+      totalValueEl.textContent = '¥ 0';
+      totalCaptionEl.textContent = '';
+      monthSummaryEmptyEl.textContent = 'No monthly summary data found.';
+      selectedMonth = '';
+      return;
+    }
+
+    if (!selectedMonth || !summary.some(x => x.month === selectedMonth)) {
+      selectedMonth = summary[0].month;
+    }
+
+    summary.forEach(item => {
+      const tr = document.createElement('tr');
+      if (item.month === selectedMonth) {
+        tr.classList.add('selected-row');
+      }
+
+      tr.innerHTML = `
+        <td>${item.month}</td>
+        <td class="number">¥ ${formatNumber(item.total)}</td>
+        <td></td>
+      `;
+
+      const td = tr.lastElementChild;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'small-button';
+      btn.textContent = 'View Details';
+      btn.addEventListener('click', () => {
+        selectedMonth = item.month;
+        renderSummary();
+        renderDetails();
+      });
+      td.appendChild(btn);
+
+      monthSummaryBodyEl.appendChild(tr);
+    });
+
+    const selected = summary.find(x => x.month === selectedMonth);
+    totalValueEl.textContent = `¥ ${formatNumber(selected ? selected.total : 0)}`;
+    totalCaptionEl.textContent = selectedMonth ? `Selected month: ${selectedMonth}` : '';
+  }
+
+  function renderDetails() {
+    assetTableBodyEl.innerHTML = '';
+    emptyMessageEl.textContent = '';
+    detailCaptionEl.textContent = selectedMonth ? `Showing details for ${selectedMonth}` : '';
+
+    const rows = getSelectedRows().sort((a, b) => {
+      if (a.record_date !== b.record_date) return b.record_date.localeCompare(a.record_date);
+      if (a.asset_category !== b.asset_category) return a.asset_category.localeCompare(b.asset_category);
+      return a.asset_name.localeCompare(b.asset_name);
+    });
+
+    if (!rows.length) {
+      emptyMessageEl.textContent = selectedMonth
+        ? `No asset records found for ${selectedMonth}.`
+        : 'No asset records found.';
+      return;
+    }
+
+    rows.forEach(row => {
+      const amount = Number(row.amount || 0);
+      const unitPrice = Number(row.unit_price_jpy || 0);
+      const value = amount * unitPrice;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${row.record_date || ''}</td>
+        <td>${row.asset_category || ''}</td>
+        <td>${row.asset_name || ''}</td>
+        <td class="number">${formatNumber(amount)}</td>
+        <td class="number">${formatNumber(unitPrice)}</td>
+        <td class="number">${formatNumber(value)}</td>
+        <td></td>
+      `;
+
+      const actionTd = tr.lastElementChild;
+
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'small-button secondary-button';
+      editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', () => setEditMode(row));
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'small-button danger-button';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.addEventListener('click', async () => {
+        const ok = window.confirm(`Delete this record?\n\nAsset Name: ${row.asset_name}\nID: ${row.id}`);
+        if (!ok) return;
+
+        const { error } = await client.from('assets').delete().eq('id', row.id);
+        if (error) {
+          tableErrorEl.textContent = 'Error deleting data: ' + error.message;
+          return;
+        }
+
+        if (editingId === row.id) resetForm();
+        loadAssets();
+      });
+
+      const wrap = document.createElement('div');
+      wrap.className = 'actions';
+      wrap.appendChild(editBtn);
+      wrap.appendChild(deleteBtn);
+      actionTd.appendChild(wrap);
+
+      assetTableBodyEl.appendChild(tr);
+    });
+  }
+
+  async function loadAssets() {
+    try {
+      tableErrorEl.textContent = '';
+      totalValueEl.textContent = 'Loading...';
+      totalCaptionEl.textContent = 'Loading asset data...';
+      monthSummaryBodyEl.innerHTML = '';
+      assetTableBodyEl.innerHTML = '';
+
+      const queryPromise = client
+        .from('assets')
+        .select('*');
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timed out after 10 seconds while loading assets.')), 10000);
+      });
+
+      const result = await Promise.race([queryPromise, timeoutPromise]);
+      const { data, error } = result;
+
+      if (error) throw error;
+
+      assetRows = (data || []).map(row => ({
+        id: row.id,
+        record_date: row.record_date,
+        asset_category: row.asset_category,
+        asset_name: row.asset_name,
+        amount: row.amount,
+        unit_price_jpy: row.unit_price_jpy
+      }));
+
+      assetRows.sort((a, b) => (b.record_date || '').localeCompare(a.record_date || ''));
+
+      renderSummary();
+      renderDetails();
+
+      if (!assetRows.length) {
+        totalCaptionEl.textContent = 'Loaded successfully, but no asset rows were returned.';
+      }
+    } catch (e) {
+      console.error('loadAssets error:', e);
+      totalValueEl.textContent = '-';
+      totalCaptionEl.textContent = 'Load failed';
+      tableErrorEl.textContent = 'Error loading data: ' + (e.message || JSON.stringify(e));
+    }
+  }
+
+  async function saveRecord(event) {
+    event.preventDefault();
+    clearMessages();
+
+    const record_date = recordDateEl.value;
+    const asset_category = assetCategoryEl.value;
+    const asset_name = assetNameEl.value;
+    const amount = Number(amountEl.value);
+    const unit_price_jpy = Number(unitPriceJpyEl.value);
+
+    if (!record_date || !asset_category || !asset_name) {
+      formErrorEl.textContent = 'Please fill in Record Date, Category, and Asset Name.';
+      return;
+    }
+
+    if (Number.isNaN(amount) || Number.isNaN(unit_price_jpy)) {
+      formErrorEl.textContent = 'Please enter valid numeric values for Amount and Unit Price.';
+      return;
+    }
+
+    saveButtonEl.disabled = true;
+    saveButtonEl.textContent = editingId === null ? 'Saving...' : 'Updating...';
+
+    const payload = { record_date, asset_category, asset_name, amount, unit_price_jpy };
+
+    try {
+      if (editingId === null) {
+        const { error } = await client.from('assets').insert([payload]);
+        if (error) throw error;
+      } else {
+        const { error } = await client.from('assets').update(payload).eq('id', editingId);
+        if (error) throw error;
+      }
+
+      selectedMonth = getMonth(record_date);
+      formSuccessEl.textContent = editingId === null ? 'Saved successfully.' : 'Updated successfully.';
+      resetForm();
+      loadAssets();
+    } catch (e) {
+      console.error(e);
+      formErrorEl.textContent = 'Error saving data: ' + e.message;
+    } finally {
+      saveButtonEl.disabled = false;
+      saveButtonEl.textContent = editingId === null ? 'Save' : 'Update';
+    }
+  }
+
+  async function sendMagicLink() {
+    clearAuthMessages();
+
+    const email = emailInputEl.value.trim();
+    if (!email) {
+      authErrorEl.textContent = 'Please enter your email address.';
+      return;
+    }
+
+    sendMagicLinkButtonEl.disabled = true;
+    sendMagicLinkButtonEl.textContent = 'Sending...';
+
+    const { error } = await client.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: 'https://tokkee78.github.io/asset-manager/'
+      }
+    });
+
+    if (error) {
+      authErrorEl.textContent = 'Error sending Magic Link: ' + error.message;
+    } else {
+      authSuccessEl.textContent = 'Magic Link sent. Please check your email.';
+    }
+
+    sendMagicLinkButtonEl.disabled = false;
+    sendMagicLinkButtonEl.textContent = 'Send Magic Link';
+  }
+
+  async function logout() {
+    clearAuthMessages();
+    const { error } = await client.auth.signOut();
+
+    if (error) {
+      authErrorEl.textContent = 'Error logging out: ' + error.message;
+      return;
+    }
+
+    currentUser = null;
+    updateAuthUI();
+  }
+
+  async function initializeAuth() {
+    try {
+      const { data, error } = await client.auth.getSession();
+
+      if (error) {
+        console.error(error);
+      }
+
+      currentUser = data?.session?.user ?? null;
+      updateAuthUI();
+
+      if (currentUser) {
+        loadAssets();
+      }
+    } catch (e) {
+      console.error('initializeAuth failed:', e);
+      authErrorEl.textContent = 'initializeAuth failed: ' + (e.message || JSON.stringify(e));
+    }
+  }
+
+  client.auth.onAuthStateChange((_event, session) => {
+    currentUser = session?.user ?? null;
+    updateAuthUI();
+
+    if (currentUser) {
+      loadAssets();
+    } else {
+      assetRows = [];
+      selectedMonth = '';
+      totalValueEl.textContent = '¥ 0';
+      totalCaptionEl.textContent = '';
+      monthSummaryBodyEl.innerHTML = '';
+      assetTableBodyEl.innerHTML = '';
+    }
+  });
+
+  amountEl.addEventListener('input', calculateValue);
+  unitPriceJpyEl.addEventListener('input', calculateValue);
+
+  assetCategoryEl.addEventListener('change', () => {
+    populateAssetNameOptions(assetCategoryEl.value, '');
+  });
+
+  clearButtonEl.addEventListener('click', resetForm);
+  assetFormEl.addEventListener('submit', saveRecord);
+  sendMagicLinkButtonEl.addEventListener('click', sendMagicLink);
+  logoutButtonEl.addEventListener('click', logout);
+
+  populateAssetNameOptions('', '');
+  resetForm();
+  initializeAuth();
+</script>
+</body>
+</html>
