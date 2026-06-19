@@ -1,254 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Personal Asset Manager</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 32px;
-      background: #f7f7f7;
-      color: #222;
-    }
-
-    h1, h2 {
-      margin-top: 0;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
-    .summary-value {
-      font-size: 28px;
-      font-weight: bold;
-      margin-top: 8px;
-    }
-
-    .muted, .section-note {
-      color: #666;
-      font-size: 14px;
-    }
-
-    form {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(240px, 1fr));
-      gap: 16px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .full-width {
-      grid-column: 1 / -1;
-    }
-
-    label {
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-
-    input, select, button {
-      padding: 10px 12px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-sizing: border-box;
-    }
-
-    button {
-      background: #222;
-      color: #fff;
-      cursor: pointer;
-      border: none;
-    }
-
-    button:hover {
-      background: #000;
-    }
-
-    button:disabled {
-      background: #999;
-      cursor: not-allowed;
-    }
-
-    .secondary-button {
-      background: #666;
-    }
-
-    .secondary-button:hover {
-      background: #444;
-    }
-
-    .danger-button {
-      background: #b71c1c;
-    }
-
-    .danger-button:hover {
-      background: #8f1212;
-    }
-
-    .small-button {
-      padding: 6px 10px;
-      font-size: 13px;
-      min-width: auto;
-    }
-
-    .button-row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 16px;
-    }
-
-    .success {
-      color: #0a7a28;
-      margin-top: 10px;
-      white-space: pre-wrap;
-    }
-
-    .error {
-      color: #c62828;
-      margin-top: 10px;
-      white-space: pre-wrap;
-    }
-
-    .mode-badge {
-      display: inline-block;
-      margin-left: 10px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #fff3cd;
-      color: #8a6d3b;
-      font-size: 12px;
-      vertical-align: middle;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-      vertical-align: middle;
-    }
-
-    th {
-      background: #f0f0f0;
-    }
-
-    .number {
-      text-align: right;
-    }
-
-    .actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .selected-row {
-      background: #eef6ff;
-    }
-
-    .empty-message {
-      color: #666;
-      font-style: italic;
-      padding-top: 12px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .auth-user {
-      font-weight: bold;
-    }
-
-    @media (max-width: 800px) {
-      form {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>
-      Personal Asset Manager
-      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">
-        v1.2.3
-      </span>
-    </h1>
-    <div class="muted">Asset records loaded from Supabase</div>
-  </div>
-
-  <!-- Auth Area -->
-  <div class="card">
-    <h2>Authentication</h2>
-
-    <div id="loggedOutArea">
-      <div class="form-group" style="max-width: 420px;">
-        <label for="emailInput">Email Address</label>
-        <input type="email" id="emailInput" placeholder="your-email@example.com" />
-      </div>
-
-      <div class="button-row">
-        <button type="button" id="sendMagicLinkButton">Send Magic Link</button>
-      </div>
-
-      <div id="authSuccess" class="success"></div>
-      <div id="authError" class="error"></div>
-
-      <div class="section-note" style="margin-top: 12px;">
-        Enter your email address and click <strong>Send Magic Link</strong>.
-        Then open the email and click the sign-in link.
-      </div>
-    </div>
-
-    <div id="loggedInArea" class="hidden">
-      <div class="section-note">Logged in as</div>
-      <div id="currentUserEmail" class="auth-user"></div>
-
-      <div class="button-row">
-        <button type="button" id="logoutButton" class="secondary-button">Logout</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- App Area -->
-  <div id="appArea" class="hidden">
-    <div class="card">
-      <h2>Selected Month Total Asset Value</h2>
-      <div id="totalValue" class="summary-value">Loading...</div>
-      <div id="totalCaption" class="section-note"></div>
-    </div>
-
-    <div class="card">
-      <h2>Monthly Summary</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Month</th>
-            <th>Total Asset Value (JPY)</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="monthSummaryBody"></tbody>
+<html langtbody id="monthSummaryBody"></tbody><html lang="en">
       </table>
       <div id="monthSummaryEmpty" class="empty-message"></div>
     </div>
@@ -272,9 +23,10 @@
             <option value="Cash">Cash</option>
             <option value="Bank">Bank</option>
             <option value="Securities">Securities</option>
+            <option value="Alternative">Alternative</option>
+            <option value="Pension">Pension</option>
             <option value="Point">Point</option>
             <option value="Mile">Mile</option>
-            <option value="Pension">Pension</option>
             <option value="Other">Other</option>
           </select>
         </div>
@@ -382,13 +134,25 @@
   let editingId = null;
   let currentUser = null;
 
+  const categorySortOrder = {
+    Cash: 1,
+    Bank: 2,
+    Securities: 3,
+    Alternative: 4,
+    Pension: 5,
+    Point: 6,
+    Mile: 7,
+    Other: 8
+  };
+
   const assetOptions = {
     Cash: ['手持ち'],
     Bank: ['ゆうちょ銀行', 'みずほ銀行', '共通口座', 'イオン銀行', 'JRE BANK', 'SBI銀行'],
-    Securities: ['SBI証券', 'SMBC日興証券', 'クラウドクレジット', 'DMM FX'],
+    Securities: ['SBI証券', 'SMBC日興証券'],
+    Alternative: ['クラウドクレジット', 'DMM FX'],
     Pension: ['拠出型年金'],
-    Mile: ['JALマイル', 'ANAマイル'],
     Point: ['ANAコイン', 'e-JALポイント', 'メトポ', '楽天ポイント', 'JRE POINT', 'WAON POINT'],
+    Mile: ['JALマイル', 'ANAマイル'],
     Other: []
   };
 
@@ -582,9 +346,14 @@
     detailCaptionEl.textContent = selectedMonth ? `Showing details for ${selectedMonth}` : '';
 
     const rows = getSelectedRows().sort((a, b) => {
-      if (a.record_date !== b.record_date) return b.record_date.localeCompare(a.record_date);
-      if (a.asset_category !== b.asset_category) return a.asset_category.localeCompare(b.asset_category);
-      return a.asset_name.localeCompare(b.asset_name);
+      const aOrder = categorySortOrder[a.asset_category] || 999;
+      const bOrder = categorySortOrder[b.asset_category] || 999;
+
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
+      }
+
+      return (a.asset_name || '').localeCompare(b.asset_name || '');
     });
 
     if (!rows.length) {
@@ -835,3 +604,251 @@
 </script>
 </body>
 </html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Asset Manager</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 32px;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .summary-value {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .muted, .section-note {
+      color: #666;
+      font-size: 14px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input, select, button {
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      background: #000;
+    }
+
+    button:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    .secondary-button {
+      background: #666;
+    }
+
+    .secondary-button:hover {
+      background: #444;
+    }
+
+    .danger-button {
+      background: #b71c1c;
+    }
+
+    .danger-button:hover {
+      background: #8f1212;
+    }
+
+    .small-button {
+      padding: 6px 10px;
+      font-size: 13px;
+      min-width: auto;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .success {
+      color: #0a7a28;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    .error {
+      color: #c62828;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    .mode-badge {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #fff3cd;
+      color: #8a6d3b;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f0f0f0;
+    }
+
+    .number {
+      text-align: right;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .selected-row {
+      background: #eef6ff;
+    }
+
+    .empty-message {
+      color: #666;
+      font-style: italic;
+      padding-top: 12px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .auth-user {
+      font-weight: bold;
+    }
+
+    @media (max-width: 800px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>
+      Personal Asset Manager
+      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">
+        v1.2.4
+      </span>
+    </h1>
+    <div class="muted">Asset records loaded from Supabase</div>
+  </div>
+
+  <!-- Auth Area -->
+  <div class="card">
+    <h2>Authentication</h2>
+
+    <div id="loggedOutArea">
+      <div class="form-group" style="max-width: 420px;">
+        <label for="emailInput">Email Address</label>
+        <input type="email" id="emailInput" placeholder="your-email@example.com" />
+      </div>
+
+      <div class="button-row">
+        <button type="button" id="sendMagicLinkButton">Send Magic Link</button>
+      </div>
+
+      <div id="authSuccess" class="success"></div>
+      <div id="authError" class="error"></div>
+
+      <div class="section-note" style="margin-top: 12px;">
+        Enter your email address and click <strong>Send Magic Link</strong>.
+        Then open the email and click the sign-in link.
+      </div>
+    </div>
+
+    <div id="loggedInArea" class="hidden">
+      <div class="section-note">Logged in as</div>
+      <div id="currentUserEmail" class="auth-user"></div>
+
+      <div class="button-row">
+        <button type="button" id="logoutButton" class="secondary-button">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Area -->
+  <div id="appArea" class="hidden">
+    <div class="card">
+      <h2>Selected Month Total Asset Value</h2>
+      <div id="totalValue" class="summary-value">Loading...</div>
+      <div id="totalCaption" class="section-note"></div>
+    </div>
+
+    <div class="card">
+      <h2>Monthly Summary</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Total Asset Value (JPY)</th>
+            <th>Action</th>
+          </tr>
+        </thead>
