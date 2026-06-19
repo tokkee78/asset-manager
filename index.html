@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Personal Asset Manager</title>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -142,6 +141,16 @@
       height: 340px;
     }
 
+    .hint-box {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #f8f8f8;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      color: #666;
+      font-size: 13px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -199,7 +208,7 @@
     <h1>
       Personal Asset Manager
       <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">
-        v1.2.6
+        v1.2.7
       </span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
@@ -314,6 +323,7 @@
         <div class="form-group">
           <label for="unitPriceJpy">Unit Price (JPY)</label>
           <input type="number" id="unitPriceJpy" step="0.01" min="0" placeholder="e.g. 1.00 or 1.50" required />
+          <div id="unitPriceHint" class="hint-box">Select Asset Name to prefill Unit Price.</div>
         </div>
 
         <div class="form-group">
@@ -331,7 +341,7 @@
       </form>
 
       <div class="section-note">
-        Unit Price (JPY) is displayed with 2 decimal places.
+        Unit Price (JPY) is prefilled from the selected Asset Name as an editable default value.
         Value (JPY) is calculated as Amount × Unit Price (JPY) and displayed as a rounded-down integer.
       </div>
     </div>
@@ -392,6 +402,7 @@
   const assetNameEl = document.getElementById('assetName');
   const amountEl = document.getElementById('amount');
   const unitPriceJpyEl = document.getElementById('unitPriceJpy');
+  const unitPriceHintEl = document.getElementById('unitPriceHint');
   const calculatedValueEl = document.getElementById('calculatedValue');
   const saveButtonEl = document.getElementById('saveButton');
   const clearButtonEl = document.getElementById('clearButton');
@@ -417,7 +428,6 @@
     Other: 8
   };
 
-  // 表示名は分かりやすい名称のまま維持
   const assetSortOrder = {
     '手持ち': 1,
     'ゆうちょ銀行': 2,
@@ -450,6 +460,31 @@
     Point: ['e JAポイント', 'ANAコイン', 'Metoro', '楽天', 'JRE POINT', 'WAON POINT'],
     Mile: ['JALマイル', 'ANAマイル'],
     Other: []
+  };
+
+  // 初期値として設定する Unit Price (JPY)
+  // 必要に応じて画面上で手修正可能
+  const unitPriceDefaults = {
+    '手持ち': 1.00,
+    'ゆうちょ銀行': 1.00,
+    'みずほ銀行': 1.00,
+    '共通口座': 0.71,
+    'イオン銀行': 1.00,
+    'JRE BANK': 1.00,
+    'SBI銀行': 1.00,
+    'SBI証券': 1.00,
+    'SMBC日興証券': 1.00,
+    'クラウドクレジット': 1.00,
+    '拠出型年金': 1.00,
+    'DMM FX': 1.00,
+    'JALマイル': 1.50,
+    'e JAポイント': 1.00,
+    'ANAマイル': 1.50,
+    'ANAコイン': 1.00,
+    'Metoro': 1.00,
+    '楽天': 1.00,
+    'JRE POINT': 1.00,
+    'WAON POINT': 1.00
   };
 
   const categoryColors = {
@@ -519,6 +554,27 @@
     calculatedValueEl.value = formatValueJpy(amount * unitPrice);
   }
 
+  function applyDefaultUnitPrice(assetName, force = false) {
+    if (!assetName) {
+      unitPriceHintEl.textContent = 'Select Asset Name to prefill Unit Price.';
+      return;
+    }
+
+    const defaultPrice = unitPriceDefaults[assetName];
+
+    if (defaultPrice === undefined) {
+      unitPriceHintEl.textContent = `No default Unit Price registered for ${assetName}.`;
+      return;
+    }
+
+    if (force || !unitPriceJpyEl.value) {
+      unitPriceJpyEl.value = Number(defaultPrice).toFixed(2);
+      calculateValue();
+    }
+
+    unitPriceHintEl.textContent = `Default Unit Price for ${assetName}: ${Number(defaultPrice).toFixed(2)} (editable)`;
+  }
+
   function clearMessages() {
     formSuccessEl.textContent = '';
     formErrorEl.textContent = '';
@@ -543,6 +599,7 @@
     amountEl.value = '';
     unitPriceJpyEl.value = '';
     calculatedValueEl.value = '';
+    unitPriceHintEl.textContent = 'Select Asset Name to prefill Unit Price.';
 
     clearMessages();
   }
@@ -559,6 +616,7 @@
     populateAssetNameOptions(row.asset_category || '', row.asset_name || '');
     amountEl.value = row.amount || '';
     unitPriceJpyEl.value = Number(row.unit_price_jpy || 0).toFixed(2);
+    applyDefaultUnitPrice(row.asset_name || '', false);
     calculateValue();
 
     clearMessages();
@@ -753,8 +811,8 @@
         monthMap.set(month, {});
       }
 
-      const categoryMap = monthMap.get(month);
-      categoryMap[category] = (categoryMap[category] || 0) + value;
+      const categoryTotals = monthMap.get(month);
+      categoryTotals[category] = (categoryTotals[category] || 0) + value;
     });
 
     const labels = [...monthMap.keys()].sort((a, b) => a.localeCompare(b));
@@ -817,9 +875,7 @@
       assetTableBodyEl.innerHTML = '';
       chartEmptyMessageEl.textContent = '';
 
-      const queryPromise = client
-        .from('assets')
-        .select('*');
+      const queryPromise = client.from('assets').select('*');
 
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Timed out after 10 seconds while loading assets.')), 10000);
@@ -853,10 +909,6 @@
       totalValueEl.textContent = '-';
       totalCaptionEl.textContent = 'Load failed';
       tableErrorEl.textContent = 'Error loading data: ' + (e.message || JSON.stringify(e));
-      if (categoryTrendChart) {
-        categoryTrendChart.destroy();
-        categoryTrendChart = null;
-      }
     }
   }
 
@@ -995,6 +1047,13 @@
 
   assetCategoryEl.addEventListener('change', () => {
     populateAssetNameOptions(assetCategoryEl.value, '');
+    unitPriceJpyEl.value = '';
+    calculatedValueEl.value = '';
+    unitPriceHintEl.textContent = 'Select Asset Name to prefill Unit Price.';
+  });
+
+  assetNameEl.addEventListener('change', () => {
+    applyDefaultUnitPrice(assetNameEl.value, true);
   });
 
   clearButtonEl.addEventListener('click', resetForm);
