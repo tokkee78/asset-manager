@@ -135,10 +135,43 @@
       vertical-align: middle;
     }
 
+    .chart-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .chart-title {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 0;
+    }
+
+    .chart-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0;
+    }
+
+    .chart-filter-group label {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .chart-filter-select {
+      min-width: 220px;
+    }
+
     .chart-container {
       position: relative;
       width: 100%;
-      height: 380px;
+      height: 420px;
     }
 
     .hint-box {
@@ -200,6 +233,10 @@
       form {
         grid-template-columns: 1fr;
       }
+
+      .chart-container {
+        height: 360px;
+      }
     }
   </style>
 </head>
@@ -207,7 +244,7 @@
   <div class="card">
     <h1>
       Personal Asset Manager
-      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.10</span>
+      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.11</span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
   </div>
@@ -247,22 +284,24 @@
     </div>
 
     <div class="card">
-      <div class="button-row" style="justify-content: space-between; margin-top: 0;">
-        <h2 style="margin-bottom: 0;">Category Trend</h2>
-        <div class="form-group" style="min-width: 240px; margin: 0;">
-          <label for="chartCategoryFilter">Chart Category Filter</label>
-          <select id="chartCategoryFilter">
-            <option value="">All Categories</option>
-            <option value="Cash">Cash</option>
-            <option value="Bank">Bank</option>
-            <option value="Securities">Securities</option>
-            <option value="Alternative">Alternative</option>
-            <option value="Pension">Pension</option>
-            <option value="Point">Point</option>
-            <option value="Mile">Mile</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
+      <div class="chart-header">
+        <h2 class="chart-title">
+          <span>Category Trend</span>
+          <span class="chart-filter-group">
+            <label for="chartCategoryFilter">Chart Category Filter</label>
+            <select id="chartCategoryFilter" class="chart-filter-select">
+              <option value="">All Categories</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank">Bank</option>
+              <option value="Securities">Securities</option>
+              <option value="Alternative">Alternative</option>
+              <option value="Pension">Pension</option>
+              <option value="Point">Point</option>
+              <option value="Mile">Mile</option>
+              <option value="Other">Other</option>
+            </select>
+          </span>
+        </h2>
       </div>
       <div class="chart-container"><canvas id="categoryTrendChart"></canvas></div>
       <div id="chartEmptyMessage" class="empty-message"></div>
@@ -491,7 +530,6 @@
     'WAON POINT': 0.75
   };
 
-  // Blue / gray unified palette
   const categoryColors = {
     Cash: '#1f4e79',
     Bank: '#5b9bd5',
@@ -505,7 +543,6 @@
 
   function populateAssetNameOptions(category, selectedValue = '') {
     assetNameEl.innerHTML = '';
-
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
     defaultOption.textContent = 'Select asset name';
@@ -525,7 +562,6 @@
       customOption.textContent = selectedValue;
       assetNameEl.appendChild(customOption);
     }
-
     assetNameEl.value = selectedValue || '';
   }
 
@@ -538,6 +574,22 @@
 
   function formatValueJpy(value) {
     return Math.floor(Number(value || 0)).toLocaleString();
+  }
+
+  function formatCompactJpy(value) {
+    const num = Number(value || 0);
+    if (Math.abs(num) >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    }
+    return `¥ ${formatValueJpy(num)}`;
+  }
+
+  function formatYAxisJpy(value) {
+    const num = Number(value || 0);
+    if (Math.abs(num) >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    }
+    return '¥ ' + formatValueJpy(num);
   }
 
   function getMonth(recordDate) {
@@ -564,28 +616,22 @@
       unitPriceHintEl.textContent = 'Select Asset Name to prefill Unit Price.';
       return;
     }
-
     const defaultPrice = unitPriceDefaults[assetName];
-
     if (defaultPrice === undefined) {
       unitPriceHintEl.textContent = `No default Unit Price registered for ${assetName}.`;
       return;
     }
-
     if (force || !unitPriceJpyEl.value) {
       unitPriceJpyEl.value = Number(defaultPrice).toFixed(2);
       calculateValue();
     }
-
     unitPriceHintEl.textContent = `Default Unit Price for ${assetName}: ${Number(defaultPrice).toFixed(2)} (editable)`;
   }
 
   function hasDuplicateMonthAsset(recordDate, assetName, excludeId = null) {
     const targetMonth = getMonth(recordDate);
     return assetRows.some(row => {
-      if (excludeId !== null && row.id === excludeId) {
-        return false;
-      }
+      if (excludeId !== null && row.id === excludeId) return false;
       return getMonth(row.record_date) === targetMonth && row.asset_name === assetName;
     });
   }
@@ -607,7 +653,6 @@
     formModeBadgeEl.classList.add('hidden');
     formModeBadgeEl.textContent = '';
     saveButtonEl.textContent = 'Save';
-
     recordDateEl.value = monthEndToday();
     assetCategoryEl.value = '';
     populateAssetNameOptions('', '');
@@ -615,7 +660,6 @@
     unitPriceJpyEl.value = '';
     calculatedValueEl.value = '';
     unitPriceHintEl.textContent = 'Select Asset Name to prefill Unit Price.';
-
     clearMessages();
   }
 
@@ -625,7 +669,6 @@
     formModeBadgeEl.classList.remove('hidden');
     formModeBadgeEl.textContent = `Editing ID: ${row.id}`;
     saveButtonEl.textContent = 'Update';
-
     recordDateEl.value = row.record_date || '';
     assetCategoryEl.value = row.asset_category || '';
     populateAssetNameOptions(row.asset_category || '', row.asset_name || '');
@@ -633,7 +676,6 @@
     unitPriceJpyEl.value = Number(row.unit_price_jpy || 0).toFixed(2);
     applyDefaultUnitPrice(row.asset_name || '', false);
     calculateValue();
-
     clearMessages();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -659,7 +701,6 @@
       const value = Number(row.amount || 0) * Number(row.unit_price_jpy || 0);
       map.set(month, (map.get(month) || 0) + value);
     });
-
     return [...map.entries()]
       .map(([month, total]) => ({ month, total }))
       .sort((a, b) => b.month.localeCompare(a.month));
@@ -672,7 +713,6 @@
   function renderSummary() {
     monthSummaryBodyEl.innerHTML = '';
     monthSummaryEmptyEl.textContent = '';
-
     const summary = getMonthlySummary(assetRows);
 
     if (!summary.length) {
@@ -689,16 +729,12 @@
 
     summary.forEach(item => {
       const tr = document.createElement('tr');
-      if (item.month === selectedMonth) {
-        tr.classList.add('selected-row');
-      }
-
+      if (item.month === selectedMonth) tr.classList.add('selected-row');
       tr.innerHTML = `
         <td>${item.month}</td>
         <td class="number">¥ ${formatValueJpy(item.total)}</td>
         <td></td>
       `;
-
       const td = tr.lastElementChild;
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -710,7 +746,6 @@
         renderDetails();
       });
       td.appendChild(btn);
-
       monthSummaryBodyEl.appendChild(tr);
     });
 
@@ -728,18 +763,14 @@
       const aCategoryOrder = categorySortOrder[a.asset_category] || 999;
       const bCategoryOrder = categorySortOrder[b.asset_category] || 999;
       if (aCategoryOrder !== bCategoryOrder) return aCategoryOrder - bCategoryOrder;
-
       const aAssetOrder = assetSortOrder[a.asset_name] || 999;
       const bAssetOrder = assetSortOrder[b.asset_name] || 999;
       if (aAssetOrder !== bAssetOrder) return aAssetOrder - bAssetOrder;
-
       return (a.asset_name || '').localeCompare(b.asset_name || '');
     });
 
     if (!rows.length) {
-      emptyMessageEl.textContent = selectedMonth
-        ? `No asset records found for ${selectedMonth}.`
-        : 'No asset records found.';
+      emptyMessageEl.textContent = selectedMonth ? `No asset records found for ${selectedMonth}.` : 'No asset records found.';
       return;
     }
 
@@ -747,7 +778,6 @@
       const amount = Number(row.amount || 0);
       const unitPrice = Number(row.unit_price_jpy || 0);
       const value = amount * unitPrice;
-
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${row.record_date || ''}</td>
@@ -773,13 +803,11 @@
       deleteBtn.addEventListener('click', async () => {
         const ok = window.confirm(`Delete this record?\n\nAsset Name: ${row.asset_name}\nID: ${row.id}`);
         if (!ok) return;
-
         const { error } = await client.from('assets').delete().eq('id', row.id);
         if (error) {
           tableErrorEl.textContent = 'Error deleting data: ' + error.message;
           return;
         }
-
         if (editingId === row.id) resetForm();
         loadAssets();
       });
@@ -789,7 +817,6 @@
       wrap.appendChild(editBtn);
       wrap.appendChild(deleteBtn);
       actionTd.appendChild(wrap);
-
       assetTableBodyEl.appendChild(tr);
     });
   }
@@ -797,10 +824,10 @@
   const totalLabelsPlugin = {
     id: 'totalLabelsPlugin',
     afterDatasetsDraw(chart) {
-      const { ctx, data, scales } = chart;
+      const { ctx, data, scales, chartArea } = chart;
       const xScale = scales.x;
       const yScale = scales.y;
-      if (!xScale || !yScale) return;
+      if (!xScale || !yScale || !chartArea) return;
 
       ctx.save();
       ctx.fillStyle = '#333';
@@ -810,36 +837,35 @@
 
       data.labels.forEach((_, index) => {
         let total = 0;
+        let highestValue = 0;
         let x = null;
-
         data.datasets.forEach((dataset, datasetIndex) => {
           const meta = chart.getDatasetMeta(datasetIndex);
           if (meta.hidden) return;
           const element = meta.data[index];
-          if (element) {
-            x = element.x;
-          }
-          total += Number(dataset.data[index] || 0);
+          if (element) x = element.x;
+          const current = Number(dataset.data[index] || 0);
+          total += current;
+          highestValue += current;
         });
 
         if (x !== null && total > 0) {
-          const y = yScale.getPixelForValue(total) - 6;
-          ctx.fillText(`¥ ${formatValueJpy(total)}`, x, y);
+          const rawY = yScale.getPixelForValue(highestValue) - 8;
+          const minY = chartArea.top + 14;
+          const y = Math.max(rawY, minY);
+          ctx.fillText(formatCompactJpy(total), x, y);
         }
       });
-
       ctx.restore();
     }
   };
 
   function renderCategoryTrendChart() {
     chartEmptyMessageEl.textContent = '';
-
     if (categoryTrendChart) {
       categoryTrendChart.destroy();
       categoryTrendChart = null;
     }
-
     if (!assetRows.length) {
       chartEmptyMessageEl.textContent = 'No category trend data found.';
       return;
@@ -857,7 +883,6 @@
 
     const labels = [...monthMap.keys()].sort((a, b) => a.localeCompare(b));
     const selectedCategory = chartCategoryFilterEl.value;
-
     let datasets = [];
     let isStacked = true;
 
@@ -881,11 +906,10 @@
         }),
         backgroundColor: categoryColors[category] || '#999999'
       }));
-      chartSubtitleEl.textContent = '積み上げ棒グラフで月別カテゴリ推移を表示します。棒の上に各月の合計値を表示します。';
+      chartSubtitleEl.textContent = '積み上げ棒グラフで月別カテゴリ推移を表示します。棒の上に各月の合計値を 35.8M のような百万単位で表示します。';
     }
 
     const ctx = document.getElementById('categoryTrendChart').getContext('2d');
-
     categoryTrendChart = new Chart(ctx, {
       type: 'bar',
       data: { labels, datasets },
@@ -893,10 +917,16 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: {
+            top: 28,
+            right: 12,
+            left: 8,
+            bottom: 0
+          }
+        },
         plugins: {
-          legend: {
-            position: 'bottom'
-          },
+          legend: { position: 'bottom' },
           tooltip: {
             callbacks: {
               label: function(context) {
@@ -906,15 +936,13 @@
           }
         },
         scales: {
-          x: {
-            stacked: isStacked
-          },
+          x: { stacked: isStacked },
           y: {
             stacked: isStacked,
+            grace: '12%',
+            beginAtZero: true,
             ticks: {
-              callback: function(value) {
-                return '¥ ' + formatValueJpy(value);
-              }
+              callback: function(value) { return formatYAxisJpy(value); }
             }
           }
         }
@@ -935,7 +963,6 @@
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Timed out after 10 seconds while loading assets.')), 10000);
       });
-
       const result = await Promise.race([queryPromise, timeoutPromise]);
       const { data, error } = result;
       if (error) throw error;
@@ -948,9 +975,7 @@
         amount: row.amount,
         unit_price_jpy: row.unit_price_jpy
       }));
-
       assetRows.sort((a, b) => (b.record_date || '').localeCompare(a.record_date || ''));
-
       renderSummary();
       renderDetails();
       renderCategoryTrendChart();
@@ -981,12 +1006,10 @@
       formErrorEl.textContent = 'Please fill in Record Date, Category, and Asset Name.';
       return;
     }
-
     if (Number.isNaN(amount) || Number.isNaN(unit_price_jpy)) {
       formErrorEl.textContent = 'Please enter valid numeric values for Amount and Unit Price.';
       return;
     }
-
     if (hasDuplicateMonthAsset(record_date, asset_name, editingId)) {
       formErrorEl.textContent = 'A record for the same month and the same Asset Name already exists.';
       return;
@@ -994,7 +1017,6 @@
 
     saveButtonEl.disabled = true;
     saveButtonEl.textContent = editingId === null ? 'Saving...' : 'Updating...';
-
     const payload = { record_date, asset_category, asset_name, amount, unit_price_jpy };
 
     try {
@@ -1026,23 +1048,17 @@
       authErrorEl.textContent = 'Please enter your email address.';
       return;
     }
-
     sendMagicLinkButtonEl.disabled = true;
     sendMagicLinkButtonEl.textContent = 'Sending...';
-
     const { error } = await client.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: 'https://tokkee78.github.io/asset-manager/'
-      }
+      options: { emailRedirectTo: 'https://tokkee78.github.io/asset-manager/' }
     });
-
     if (error) {
       authErrorEl.textContent = 'Error sending Magic Link: ' + error.message;
     } else {
       authSuccessEl.textContent = 'Magic Link sent. Please check your email.';
     }
-
     sendMagicLinkButtonEl.disabled = false;
     sendMagicLinkButtonEl.textContent = 'Send Magic Link';
   }
@@ -1062,7 +1078,6 @@
     try {
       const { data, error } = await client.auth.getSession();
       if (error) console.error(error);
-
       currentUser = data?.session?.user ?? null;
       updateAuthUI();
       if (currentUser) loadAssets();
@@ -1075,7 +1090,6 @@
   client.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user ?? null;
     updateAuthUI();
-
     if (currentUser) {
       loadAssets();
     } else {
@@ -1095,22 +1109,14 @@
 
   amountEl.addEventListener('input', calculateValue);
   unitPriceJpyEl.addEventListener('input', calculateValue);
-
   assetCategoryEl.addEventListener('change', () => {
     populateAssetNameOptions(assetCategoryEl.value, '');
     unitPriceJpyEl.value = '';
     calculatedValueEl.value = '';
     unitPriceHintEl.textContent = 'Select Asset Name to prefill Unit Price.';
   });
-
-  assetNameEl.addEventListener('change', () => {
-    applyDefaultUnitPrice(assetNameEl.value, true);
-  });
-
-  chartCategoryFilterEl.addEventListener('change', () => {
-    renderCategoryTrendChart();
-  });
-
+  assetNameEl.addEventListener('change', () => applyDefaultUnitPrice(assetNameEl.value, true));
+  chartCategoryFilterEl.addEventListener('change', () => renderCategoryTrendChart());
   clearButtonEl.addEventListener('click', resetForm);
   assetFormEl.addEventListener('submit', saveRecord);
   sendMagicLinkButtonEl.addEventListener('click', sendMagicLink);
