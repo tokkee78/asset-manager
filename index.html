@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,7 +14,11 @@
       background: #f7f7f7;
       color: #222;
     }
-    h1, h2 { margin-top: 0; }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
     .card {
       background: #fff;
       border-radius: 12px;
@@ -22,16 +26,38 @@
       margin-bottom: 20px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    .summary-value { font-size: 28px; font-weight: bold; margin-top: 8px; }
-    .muted, .section-note { color: #666; font-size: 14px; }
+
+    .summary-value {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .muted, .section-note {
+      color: #666;
+      font-size: 14px;
+    }
+
     form {
       display: grid;
       grid-template-columns: repeat(2, minmax(240px, 1fr));
       gap: 16px;
     }
-    .form-group { display: flex; flex-direction: column; }
-    .full-width { grid-column: 1 / -1; }
-    label { font-weight: bold; margin-bottom: 6px; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
     input, select, button {
       padding: 10px 12px;
       font-size: 14px;
@@ -39,45 +65,149 @@
       border-radius: 8px;
       box-sizing: border-box;
     }
-    button { background: #222; color: #fff; cursor: pointer; border: none; }
-    button:hover { background: #000; }
-    button:disabled { background: #999; cursor: not-allowed; }
-    .secondary-button { background: #666; }
-    .secondary-button:hover { background: #444; }
-    .danger-button { background: #b71c1c; }
-    .danger-button:hover { background: #8f1212; }
-    .small-button { padding: 6px 10px; font-size: 13px; min-width: auto; }
+
+    button {
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      background: #000;
+    }
+
+    button:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    .secondary-button {
+      background: #666;
+    }
+
+    .secondary-button:hover {
+      background: #444;
+    }
+
+    .danger-button {
+      background: #b71c1c;
+    }
+
+    .danger-button:hover {
+      background: #8f1212;
+    }
+
+    .small-button {
+      padding: 6px 10px;
+      font-size: 13px;
+      min-width: auto;
+    }
+
     .button-row {
-      display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
     }
-    .success { color: #0a7a28; margin-top: 10px; white-space: pre-wrap; }
-    .error { color: #c62828; margin-top: 10px; white-space: pre-wrap; }
+
+    .success {
+      color: #0a7a28;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    .error {
+      color: #c62828;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
     .mode-badge {
-      display: inline-block; margin-left: 10px; padding: 4px 8px; border-radius: 999px;
-      background: #fff3cd; color: #8a6d3b; font-size: 12px; vertical-align: middle;
+      display: inline-block;
+      margin-left: 10px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #fff3cd;
+      color: #8a6d3b;
+      font-size: 12px;
+      vertical-align: middle;
     }
-    .chart-container { position: relative; width: 100%; height: 340px; }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 380px;
+    }
+
     .hint-box {
-      margin-top: 8px; padding: 8px 10px; background: #f8f8f8; border: 1px solid #e5e5e5;
-      border-radius: 8px; color: #666; font-size: 13px;
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #f8f8f8;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      color: #666;
+      font-size: 13px;
     }
-    table { width: 100%; border-collapse: collapse; background: #fff; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: middle; }
-    th { background: #f0f0f0; }
-    .number { text-align: right; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .selected-row { background: #eef6ff; }
-    .empty-message { color: #666; font-style: italic; padding-top: 12px; }
-    .hidden { display: none; }
-    .auth-user { font-weight: bold; }
-    @media (max-width: 800px) { form { grid-template-columns: 1fr; } }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f0f0f0;
+    }
+
+    .number {
+      text-align: right;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .selected-row {
+      background: #eef6ff;
+    }
+
+    .empty-message {
+      color: #666;
+      font-style: italic;
+      padding-top: 12px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .auth-user {
+      font-weight: bold;
+    }
+
+    @media (max-width: 800px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>
       Personal Asset Manager
-      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.9</span>
+      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.10</span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
   </div>
@@ -117,10 +247,26 @@
     </div>
 
     <div class="card">
-      <h2>Category Trend</h2>
+      <div class="button-row" style="justify-content: space-between; margin-top: 0;">
+        <h2 style="margin-bottom: 0;">Category Trend</h2>
+        <div class="form-group" style="min-width: 240px; margin: 0;">
+          <label for="chartCategoryFilter">Chart Category Filter</label>
+          <select id="chartCategoryFilter">
+            <option value="">All Categories</option>
+            <option value="Cash">Cash</option>
+            <option value="Bank">Bank</option>
+            <option value="Securities">Securities</option>
+            <option value="Alternative">Alternative</option>
+            <option value="Pension">Pension</option>
+            <option value="Point">Point</option>
+            <option value="Mile">Mile</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
       <div class="chart-container"><canvas id="categoryTrendChart"></canvas></div>
       <div id="chartEmptyMessage" class="empty-message"></div>
-      <div class="section-note">Stacked bar chart of category totals by month.</div>
+      <div id="chartSubtitle" class="section-note">積み上げ棒グラフで月別カテゴリ推移を表示します。棒の上に各月の合計値を表示します。</div>
     </div>
 
     <div class="card">
@@ -251,6 +397,8 @@
   const emptyMessageEl = document.getElementById('emptyMessage');
   const tableErrorEl = document.getElementById('tableError');
   const chartEmptyMessageEl = document.getElementById('chartEmptyMessage');
+  const chartCategoryFilterEl = document.getElementById('chartCategoryFilter');
+  const chartSubtitleEl = document.getElementById('chartSubtitle');
 
   const formTitleEl = document.getElementById('formTitle');
   const formModeBadgeEl = document.getElementById('formModeBadge');
@@ -320,7 +468,6 @@
     Other: []
   };
 
-  // ユーザー手修正版の Unit Price を反映
   const unitPriceDefaults = {
     '手持ち': 1.00,
     'ゆうちょ銀行': 1.00,
@@ -344,15 +491,16 @@
     'WAON POINT': 0.75
   };
 
+  // Blue / gray unified palette
   const categoryColors = {
-    Cash: '#4e79a7',
-    Bank: '#59a14f',
-    Securities: '#9c755f',
-    Alternative: '#e15759',
-    Pension: '#f28e2b',
-    Point: '#edc948',
-    Mile: '#76b7b2',
-    Other: '#bab0ab'
+    Cash: '#1f4e79',
+    Bank: '#5b9bd5',
+    Securities: '#d9e2f3',
+    Alternative: '#7f8c8d',
+    Pension: '#2f5597',
+    Point: '#9dc3e6',
+    Mile: '#c9d3d9',
+    Other: '#4f5b66'
   };
 
   function populateAssetNameOptions(category, selectedValue = '') {
@@ -506,7 +654,6 @@
 
   function getMonthlySummary(rows) {
     const map = new Map();
-
     rows.forEach(row => {
       const month = getMonth(row.record_date);
       const value = Number(row.amount || 0) * Number(row.unit_price_jpy || 0);
@@ -580,17 +727,11 @@
     const rows = getSelectedRows().sort((a, b) => {
       const aCategoryOrder = categorySortOrder[a.asset_category] || 999;
       const bCategoryOrder = categorySortOrder[b.asset_category] || 999;
-
-      if (aCategoryOrder !== bCategoryOrder) {
-        return aCategoryOrder - bCategoryOrder;
-      }
+      if (aCategoryOrder !== bCategoryOrder) return aCategoryOrder - bCategoryOrder;
 
       const aAssetOrder = assetSortOrder[a.asset_name] || 999;
       const bAssetOrder = assetSortOrder[b.asset_name] || 999;
-
-      if (aAssetOrder !== bAssetOrder) {
-        return aAssetOrder - bAssetOrder;
-      }
+      if (aAssetOrder !== bAssetOrder) return aAssetOrder - bAssetOrder;
 
       return (a.asset_name || '').localeCompare(b.asset_name || '');
     });
@@ -619,7 +760,6 @@
       `;
 
       const actionTd = tr.lastElementChild;
-
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
       editBtn.className = 'small-button secondary-button';
@@ -631,10 +771,7 @@
       deleteBtn.className = 'small-button danger-button';
       deleteBtn.textContent = 'Delete';
       deleteBtn.addEventListener('click', async () => {
-        const ok = window.confirm(`Delete this record?
-
-Asset Name: ${row.asset_name}
-ID: ${row.id}`);
+        const ok = window.confirm(`Delete this record?\n\nAsset Name: ${row.asset_name}\nID: ${row.id}`);
         if (!ok) return;
 
         const { error } = await client.from('assets').delete().eq('id', row.id);
@@ -657,6 +794,44 @@ ID: ${row.id}`);
     });
   }
 
+  const totalLabelsPlugin = {
+    id: 'totalLabelsPlugin',
+    afterDatasetsDraw(chart) {
+      const { ctx, data, scales } = chart;
+      const xScale = scales.x;
+      const yScale = scales.y;
+      if (!xScale || !yScale) return;
+
+      ctx.save();
+      ctx.fillStyle = '#333';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+
+      data.labels.forEach((_, index) => {
+        let total = 0;
+        let x = null;
+
+        data.datasets.forEach((dataset, datasetIndex) => {
+          const meta = chart.getDatasetMeta(datasetIndex);
+          if (meta.hidden) return;
+          const element = meta.data[index];
+          if (element) {
+            x = element.x;
+          }
+          total += Number(dataset.data[index] || 0);
+        });
+
+        if (x !== null && total > 0) {
+          const y = yScale.getPixelForValue(total) - 6;
+          ctx.fillText(`¥ ${formatValueJpy(total)}`, x, y);
+        }
+      });
+
+      ctx.restore();
+    }
+  };
+
   function renderCategoryTrendChart() {
     chartEmptyMessageEl.textContent = '';
 
@@ -671,39 +846,50 @@ ID: ${row.id}`);
     }
 
     const monthMap = new Map();
-
     assetRows.forEach(row => {
       const month = getMonth(row.record_date);
       const category = row.asset_category || 'Other';
       const value = Number(row.amount || 0) * Number(row.unit_price_jpy || 0);
-
-      if (!monthMap.has(month)) {
-        monthMap.set(month, {});
-      }
-
+      if (!monthMap.has(month)) monthMap.set(month, {});
       const categoryTotals = monthMap.get(month);
       categoryTotals[category] = (categoryTotals[category] || 0) + value;
     });
 
     const labels = [...monthMap.keys()].sort((a, b) => a.localeCompare(b));
+    const selectedCategory = chartCategoryFilterEl.value;
 
-    const datasets = categoryOrder.map(category => ({
-      label: category,
-      data: labels.map(month => {
-        const categoryTotals = monthMap.get(month) || {};
-        return Math.floor(categoryTotals[category] || 0);
-      }),
-      backgroundColor: categoryColors[category] || '#999999'
-    }));
+    let datasets = [];
+    let isStacked = true;
+
+    if (selectedCategory) {
+      datasets = [{
+        label: selectedCategory,
+        data: labels.map(month => {
+          const categoryTotals = monthMap.get(month) || {};
+          return Math.floor(categoryTotals[selectedCategory] || 0);
+        }),
+        backgroundColor: categoryColors[selectedCategory] || '#1f4e79'
+      }];
+      isStacked = false;
+      chartSubtitleEl.textContent = `${selectedCategory} の月別推移です。棒の上に各月の値を表示します。`;
+    } else {
+      datasets = categoryOrder.map(category => ({
+        label: category,
+        data: labels.map(month => {
+          const categoryTotals = monthMap.get(month) || {};
+          return Math.floor(categoryTotals[category] || 0);
+        }),
+        backgroundColor: categoryColors[category] || '#999999'
+      }));
+      chartSubtitleEl.textContent = '積み上げ棒グラフで月別カテゴリ推移を表示します。棒の上に各月の合計値を表示します。';
+    }
 
     const ctx = document.getElementById('categoryTrendChart').getContext('2d');
 
     categoryTrendChart = new Chart(ctx, {
       type: 'bar',
-      data: {
-        labels,
-        datasets
-      },
+      data: { labels, datasets },
+      plugins: [totalLabelsPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -721,10 +907,10 @@ ID: ${row.id}`);
         },
         scales: {
           x: {
-            stacked: true
+            stacked: isStacked
           },
           y: {
-            stacked: true,
+            stacked: isStacked,
             ticks: {
               callback: function(value) {
                 return '¥ ' + formatValueJpy(value);
@@ -746,14 +932,12 @@ ID: ${row.id}`);
       chartEmptyMessageEl.textContent = '';
 
       const queryPromise = client.from('assets').select('*');
-
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Timed out after 10 seconds while loading assets.')), 10000);
       });
 
       const result = await Promise.race([queryPromise, timeoutPromise]);
       const { data, error } = result;
-
       if (error) throw error;
 
       assetRows = (data || []).map(row => ({
@@ -779,6 +963,7 @@ ID: ${row.id}`);
       totalValueEl.textContent = '-';
       totalCaptionEl.textContent = 'Load failed';
       tableErrorEl.textContent = 'Error loading data: ' + (e.message || JSON.stringify(e));
+      chartEmptyMessageEl.textContent = 'Chart could not be loaded.';
     }
   }
 
@@ -836,7 +1021,6 @@ ID: ${row.id}`);
 
   async function sendMagicLink() {
     clearAuthMessages();
-
     const email = emailInputEl.value.trim();
     if (!email) {
       authErrorEl.textContent = 'Please enter your email address.';
@@ -866,12 +1050,10 @@ ID: ${row.id}`);
   async function logout() {
     clearAuthMessages();
     const { error } = await client.auth.signOut();
-
     if (error) {
       authErrorEl.textContent = 'Error logging out: ' + error.message;
       return;
     }
-
     currentUser = null;
     updateAuthUI();
   }
@@ -879,17 +1061,11 @@ ID: ${row.id}`);
   async function initializeAuth() {
     try {
       const { data, error } = await client.auth.getSession();
-
-      if (error) {
-        console.error(error);
-      }
+      if (error) console.error(error);
 
       currentUser = data?.session?.user ?? null;
       updateAuthUI();
-
-      if (currentUser) {
-        loadAssets();
-      }
+      if (currentUser) loadAssets();
     } catch (e) {
       console.error('initializeAuth failed:', e);
       authErrorEl.textContent = 'initializeAuth failed: ' + (e.message || JSON.stringify(e));
@@ -929,6 +1105,10 @@ ID: ${row.id}`);
 
   assetNameEl.addEventListener('change', () => {
     applyDefaultUnitPrice(assetNameEl.value, true);
+  });
+
+  chartCategoryFilterEl.addEventListener('change', () => {
+    renderCategoryTrendChart();
   });
 
   clearButtonEl.addEventListener('click', resetForm);
