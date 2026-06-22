@@ -49,6 +49,19 @@
       flex-direction: column;
     }
 
+    .inline-form-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .inline-form-group label {
+      margin: 0;
+      white-space: nowrap;
+      font-weight: bold;
+    }
+
     .full-width {
       grid-column: 1 / -1;
     }
@@ -135,43 +148,72 @@
       vertical-align: middle;
     }
 
-    .chart-header {
+    .chart-header,
+    .summary-header {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 16px;
       flex-wrap: wrap;
       margin-bottom: 8px;
     }
 
-    .chart-title {
+    .chart-title-row,
+    .summary-title-row {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       flex-wrap: wrap;
+    }
+
+    .section-title {
       margin: 0;
     }
 
-    .chart-filter-group {
-      display: flex;
+    .section-control-chip {
+      display: inline-flex;
       align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
-      margin: 0;
+      padding: 6px 10px;
+      border: 1px solid #d9d9d9;
+      border-radius: 999px;
+      background: #fafafa;
     }
 
-    .chart-filter-group label {
+    .section-control-chip label {
       margin: 0;
-      white-space: nowrap;
+      font-size: 13px;
+      color: #666;
     }
 
-    .chart-filter-select {
-      min-width: 220px;
+    .section-control-chip select {
+      min-width: 190px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: #fff;
     }
 
     .chart-container {
       position: relative;
       width: 100%;
-      height: 420px;
+      height: 430px;
+    }
+
+    .summary-table-wrap {
+      max-height: 520px;
+      overflow-y: auto;
+      border: 1px solid #ececec;
+      border-radius: 10px;
+    }
+
+    .summary-table-wrap table {
+      margin: 0;
+    }
+
+    .summary-table-wrap thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
     }
 
     .hint-box {
@@ -237,6 +279,17 @@
       .chart-container {
         height: 360px;
       }
+
+      .section-control-chip {
+        width: 100%;
+        border-radius: 12px;
+      }
+
+      .section-control-chip select {
+        min-width: 0;
+        width: 100%;
+        border-radius: 8px;
+      }
     }
   </style>
 </head>
@@ -244,7 +297,7 @@
   <div class="card">
     <h1>
       Personal Asset Manager
-      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.11</span>
+      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.12</span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
   </div>
@@ -285,11 +338,11 @@
 
     <div class="card">
       <div class="chart-header">
-        <h2 class="chart-title">
-          <span>Category Trend</span>
-          <span class="chart-filter-group">
-            <label for="chartCategoryFilter">Chart Category Filter</label>
-            <select id="chartCategoryFilter" class="chart-filter-select">
+        <div class="chart-title-row">
+          <h2 class="section-title">Category Trend</h2>
+          <div class="section-control-chip">
+            <label for="chartCategoryFilter">Category Filter</label>
+            <select id="chartCategoryFilter">
               <option value="">All Categories</option>
               <option value="Cash">Cash</option>
               <option value="Bank">Bank</option>
@@ -300,8 +353,8 @@
               <option value="Mile">Mile</option>
               <option value="Other">Other</option>
             </select>
-          </span>
-        </h2>
+          </div>
+        </div>
       </div>
       <div class="chart-container"><canvas id="categoryTrendChart"></canvas></div>
       <div id="chartEmptyMessage" class="empty-message"></div>
@@ -309,17 +362,30 @@
     </div>
 
     <div class="card">
-      <h2>Monthly Summary</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Month</th>
-            <th>Total Asset Value (JPY)</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="monthSummaryBody"></tbody>
-      </table>
+      <div class="summary-header">
+        <div class="summary-title-row">
+          <h2 class="section-title">Monthly Summary</h2>
+          <div class="section-control-chip">
+            <label for="summaryYearFilter">Summary Year</label>
+            <select id="summaryYearFilter">
+              <option value="">All Years</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="summaryCaption" class="section-note" style="margin-bottom: 10px;"></div>
+      <div class="summary-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Total Asset Value (JPY)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="monthSummaryBody"></tbody>
+        </table>
+      </div>
       <div id="monthSummaryEmpty" class="empty-message"></div>
     </div>
 
@@ -431,6 +497,8 @@
   const totalCaptionEl = document.getElementById('totalCaption');
   const monthSummaryBodyEl = document.getElementById('monthSummaryBody');
   const monthSummaryEmptyEl = document.getElementById('monthSummaryEmpty');
+  const summaryYearFilterEl = document.getElementById('summaryYearFilter');
+  const summaryCaptionEl = document.getElementById('summaryCaption');
   const detailCaptionEl = document.getElementById('detailCaption');
   const assetTableBodyEl = document.getElementById('assetTableBody');
   const emptyMessageEl = document.getElementById('emptyMessage');
@@ -459,6 +527,7 @@
   let editingId = null;
   let currentUser = null;
   let categoryTrendChart = null;
+  let selectedSummaryYear = '';
 
   const categoryOrder = ['Cash', 'Bank', 'Securities', 'Alternative', 'Pension', 'Point', 'Mile', 'Other'];
 
@@ -492,8 +561,9 @@
     'ANAコイン': 16,
     'メトポ': 17,
     '楽天ポイント': 18,
-    'JRE POINT': 19,
-    'WAON POINT': 20
+    'Pontaポイント': 19,
+    'JRE POINT': 20,
+    'WAON POINT': 21
   };
 
   const assetOptions = {
@@ -502,7 +572,7 @@
     Securities: ['SBI証券', 'SMBC日興証券'],
     Alternative: ['クラウドクレジット', 'DMM FX'],
     Pension: ['拠出型年金'],
-    Point: ['e-JALポイント', 'ANAコイン', 'メトポ', '楽天ポイント', 'JRE POINT', 'WAON POINT'],
+    Point: ['e-JALポイント', 'ANAコイン', 'メトポ', '楽天ポイント', 'Pontaポイント', 'JRE POINT', 'WAON POINT'],
     Mile: ['JALマイル', 'ANAマイル'],
     Other: []
   };
@@ -526,6 +596,7 @@
     'ANAコイン': 1.00,
     'メトポ': 1.35,
     '楽天ポイント': 0.75,
+    'Pontaポイント': 0.75,
     'JRE POINT': 0.68,
     'WAON POINT': 0.75
   };
@@ -706,6 +777,28 @@
       .sort((a, b) => b.month.localeCompare(a.month));
   }
 
+  function updateSummaryYearFilter(summary) {
+    const years = [...new Set(summary.map(item => item.month.slice(0, 4)))].sort((a, b) => b.localeCompare(a));
+    const previousValue = selectedSummaryYear;
+    summaryYearFilterEl.innerHTML = '<option value="">All Years</option>';
+    years.forEach(year => {
+      const option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      summaryYearFilterEl.appendChild(option);
+    });
+
+    if (previousValue && years.includes(previousValue)) {
+      selectedSummaryYear = previousValue;
+    } else if (!selectedSummaryYear && years.length) {
+      selectedSummaryYear = years[0];
+    } else if (selectedSummaryYear && !years.includes(selectedSummaryYear)) {
+      selectedSummaryYear = years[0] || '';
+    }
+
+    summaryYearFilterEl.value = selectedSummaryYear;
+  }
+
   function getSelectedRows() {
     return assetRows.filter(row => getMonth(row.record_date) === selectedMonth);
   }
@@ -713,6 +806,8 @@
   function renderSummary() {
     monthSummaryBodyEl.innerHTML = '';
     monthSummaryEmptyEl.textContent = '';
+    summaryCaptionEl.textContent = '';
+
     const summary = getMonthlySummary(assetRows);
 
     if (!summary.length) {
@@ -720,14 +815,31 @@
       totalCaptionEl.textContent = '';
       monthSummaryEmptyEl.textContent = 'No monthly summary data found.';
       selectedMonth = '';
+      selectedSummaryYear = '';
+      summaryYearFilterEl.innerHTML = '<option value="">All Years</option>';
       return;
     }
 
-    if (!selectedMonth || !summary.some(x => x.month === selectedMonth)) {
-      selectedMonth = summary[0].month;
+    updateSummaryYearFilter(summary);
+
+    let filteredSummary = summary;
+    if (selectedSummaryYear) {
+      filteredSummary = summary.filter(item => item.month.startsWith(selectedSummaryYear + '-'));
+      summaryCaptionEl.textContent = `${selectedSummaryYear}年のみ表示中（${filteredSummary.length}か月分）`;
+    } else {
+      summaryCaptionEl.textContent = `全期間を表示中（${summary.length}か月分）`;
     }
 
-    summary.forEach(item => {
+    if (!filteredSummary.length) {
+      monthSummaryEmptyEl.textContent = 'No monthly summary data found for the selected year.';
+      return;
+    }
+
+    if (!selectedMonth || !filteredSummary.some(x => x.month === selectedMonth)) {
+      selectedMonth = filteredSummary[0].month;
+    }
+
+    filteredSummary.forEach(item => {
       const tr = document.createElement('tr');
       if (item.month === selectedMonth) tr.classList.add('selected-row');
       tr.innerHTML = `
@@ -1095,6 +1207,7 @@
     } else {
       assetRows = [];
       selectedMonth = '';
+      selectedSummaryYear = '';
       totalValueEl.textContent = '¥ 0';
       totalCaptionEl.textContent = '';
       monthSummaryBodyEl.innerHTML = '';
@@ -1117,6 +1230,11 @@
   });
   assetNameEl.addEventListener('change', () => applyDefaultUnitPrice(assetNameEl.value, true));
   chartCategoryFilterEl.addEventListener('change', () => renderCategoryTrendChart());
+  summaryYearFilterEl.addEventListener('change', () => {
+    selectedSummaryYear = summaryYearFilterEl.value;
+    renderSummary();
+    renderDetails();
+  });
   clearButtonEl.addEventListener('click', resetForm);
   assetFormEl.addEventListener('submit', saveRecord);
   sendMagicLinkButtonEl.addEventListener('click', sendMagicLink);
