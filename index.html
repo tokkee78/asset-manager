@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,11 +14,7 @@
       background: #f7f7f7;
       color: #222;
     }
-
-    h1, h2 {
-      margin-top: 0;
-    }
-
+    h1, h2 { margin-top: 0; }
     .card {
       background: #fff;
       border-radius: 12px;
@@ -26,51 +22,16 @@
       margin-bottom: 20px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-
-    .summary-value {
-      font-size: 28px;
-      font-weight: bold;
-      margin-top: 8px;
-    }
-
-    .muted, .section-note {
-      color: #666;
-      font-size: 14px;
-    }
-
+    .summary-value { font-size: 28px; font-weight: bold; margin-top: 8px; }
+    .muted, .section-note { color: #666; font-size: 14px; }
     form {
       display: grid;
       grid-template-columns: repeat(2, minmax(240px, 1fr));
       gap: 16px;
     }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .inline-form-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .inline-form-group label {
-      margin: 0;
-      white-space: nowrap;
-      font-weight: bold;
-    }
-
-    .full-width {
-      grid-column: 1 / -1;
-    }
-
-    label {
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-
+    .form-group { display: flex; flex-direction: column; }
+    .full-width { grid-column: 1 / -1; }
+    label { font-weight: bold; margin-bottom: 6px; }
     input, select, button {
       padding: 10px 12px;
       font-size: 14px;
@@ -78,45 +39,14 @@
       border-radius: 8px;
       box-sizing: border-box;
     }
-
-    button {
-      background: #222;
-      color: #fff;
-      cursor: pointer;
-      border: none;
-    }
-
-    button:hover {
-      background: #000;
-    }
-
-    button:disabled {
-      background: #999;
-      cursor: not-allowed;
-    }
-
-    .secondary-button {
-      background: #666;
-    }
-
-    .secondary-button:hover {
-      background: #444;
-    }
-
-    .danger-button {
-      background: #b71c1c;
-    }
-
-    .danger-button:hover {
-      background: #8f1212;
-    }
-
-    .small-button {
-      padding: 6px 10px;
-      font-size: 13px;
-      min-width: auto;
-    }
-
+    button { background: #222; color: #fff; cursor: pointer; border: none; }
+    button:hover { background: #000; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    .secondary-button { background: #666; }
+    .secondary-button:hover { background: #444; }
+    .danger-button { background: #b71c1c; }
+    .danger-button:hover { background: #8f1212; }
+    .small-button { padding: 6px 10px; font-size: 13px; min-width: auto; }
     .button-row {
       display: flex;
       gap: 12px;
@@ -124,19 +54,8 @@
       flex-wrap: wrap;
       margin-top: 16px;
     }
-
-    .success {
-      color: #0a7a28;
-      margin-top: 10px;
-      white-space: pre-wrap;
-    }
-
-    .error {
-      color: #c62828;
-      margin-top: 10px;
-      white-space: pre-wrap;
-    }
-
+    .success { color: #0a7a28; margin-top: 10px; white-space: pre-wrap; }
+    .error { color: #c62828; margin-top: 10px; white-space: pre-wrap; }
     .mode-badge {
       display: inline-block;
       margin-left: 10px;
@@ -147,9 +66,7 @@
       font-size: 12px;
       vertical-align: middle;
     }
-
-    .chart-header,
-    .summary-header {
+    .chart-header, .summary-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -157,19 +74,13 @@
       flex-wrap: wrap;
       margin-bottom: 8px;
     }
-
-    .chart-title-row,
-    .summary-title-row {
+    .chart-title-row, .summary-title-row {
       display: flex;
       align-items: center;
       gap: 14px;
       flex-wrap: wrap;
     }
-
-    .section-title {
-      margin: 0;
-    }
-
+    .section-title { margin: 0; }
     .section-control-chip {
       display: inline-flex;
       align-items: center;
@@ -179,43 +90,34 @@
       border-radius: 999px;
       background: #fafafa;
     }
-
     .section-control-chip label {
       margin: 0;
       font-size: 13px;
       color: #666;
     }
-
     .section-control-chip select {
       min-width: 190px;
       padding: 8px 10px;
       border-radius: 999px;
       background: #fff;
     }
-
     .chart-container {
       position: relative;
       width: 100%;
       height: 430px;
     }
-
     .summary-table-wrap {
       max-height: 520px;
       overflow-y: auto;
       border: 1px solid #ececec;
       border-radius: 10px;
     }
-
-    .summary-table-wrap table {
-      margin: 0;
-    }
-
+    .summary-table-wrap table { margin: 0; }
     .summary-table-wrap thead th {
       position: sticky;
       top: 0;
       z-index: 1;
     }
-
     .hint-box {
       margin-top: 8px;
       padding: 8px 10px;
@@ -225,66 +127,22 @@
       color: #666;
       font-size: 13px;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-      vertical-align: middle;
-    }
-
-    th {
-      background: #f0f0f0;
-    }
-
-    .number {
-      text-align: right;
-    }
-
-    .actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .selected-row {
-      background: #eef6ff;
-    }
-
-    .empty-message {
-      color: #666;
-      font-style: italic;
-      padding-top: 12px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .auth-user {
-      font-weight: bold;
-    }
-
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: middle; }
+    th { background: #f0f0f0; }
+    .number { text-align: right; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .selected-row { background: #eef6ff; }
+    .empty-message { color: #666; font-style: italic; padding-top: 12px; }
+    .hidden { display: none; }
+    .auth-user { font-weight: bold; }
     @media (max-width: 800px) {
-      form {
-        grid-template-columns: 1fr;
-      }
-
-      .chart-container {
-        height: 360px;
-      }
-
+      form { grid-template-columns: 1fr; }
+      .chart-container { height: 360px; }
       .section-control-chip {
         width: 100%;
         border-radius: 12px;
       }
-
       .section-control-chip select {
         min-width: 0;
         width: 100%;
@@ -297,7 +155,7 @@
   <div class="card">
     <h1>
       Personal Asset Manager
-      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.12</span>
+      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.13</span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
   </div>
@@ -358,7 +216,7 @@
       </div>
       <div class="chart-container"><canvas id="categoryTrendChart"></canvas></div>
       <div id="chartEmptyMessage" class="empty-message"></div>
-      <div id="chartSubtitle" class="section-note">積み上げ棒グラフで月別カテゴリ推移を表示します。棒の上に各月の合計値を表示します。</div>
+      <div id="chartSubtitle" class="section-note">Shows monthly category totals as a stacked bar chart. In All Categories view, total labels are shown every three months. In single-category view, labels are shown for every month.</div>
     </div>
 
     <div class="card">
@@ -530,42 +388,13 @@
   let selectedSummaryYear = '';
 
   const categoryOrder = ['Cash', 'Bank', 'Securities', 'Alternative', 'Pension', 'Point', 'Mile', 'Other'];
-
-  const categorySortOrder = {
-    Cash: 1,
-    Bank: 2,
-    Securities: 3,
-    Alternative: 4,
-    Pension: 5,
-    Point: 6,
-    Mile: 7,
-    Other: 8
-  };
-
+  const categorySortOrder = { Cash:1, Bank:2, Securities:3, Alternative:4, Pension:5, Point:6, Mile:7, Other:8 };
   const assetSortOrder = {
-    '手持ち': 1,
-    'ゆうちょ銀行': 2,
-    'みずほ銀行': 3,
-    '共通口座': 4,
-    'イオン銀行': 5,
-    'JRE BANK': 6,
-    'SBI銀行': 7,
-    'SBI証券': 8,
-    'SMBC日興証券': 9,
-    'クラウドクレジット': 10,
-    '拠出型年金': 11,
-    'DMM FX': 12,
-    'JALマイル': 13,
-    'e-JALポイント': 14,
-    'ANAマイル': 15,
-    'ANAコイン': 16,
-    'メトポ': 17,
-    '楽天ポイント': 18,
-    'Pontaポイント': 19,
-    'JRE POINT': 20,
-    'WAON POINT': 21
+    '手持ち': 1, 'ゆうちょ銀行': 2, 'みずほ銀行': 3, '共通口座': 4, 'イオン銀行': 5, 'JRE BANK': 6, 'SBI銀行': 7,
+    'SBI証券': 8, 'SMBC日興証券': 9, 'クラウドクレジット': 10, '拠出型年金': 11, 'DMM FX': 12,
+    'JALマイル': 13, 'e-JALポイント': 14, 'ANAマイル': 15, 'ANAコイン': 16, 'メトポ': 17,
+    '楽天ポイント': 18, 'Pontaポイント': 19, 'JRE POINT': 20, 'WAON POINT': 21
   };
-
   const assetOptions = {
     Cash: ['手持ち'],
     Bank: ['ゆうちょ銀行', 'みずほ銀行', '共通口座', 'イオン銀行', 'JRE BANK', 'SBI銀行'],
@@ -576,40 +405,16 @@
     Mile: ['JALマイル', 'ANAマイル'],
     Other: []
   };
-
   const unitPriceDefaults = {
-    '手持ち': 1.00,
-    'ゆうちょ銀行': 1.00,
-    'みずほ銀行': 1.00,
-    '共通口座': 0.71,
-    'イオン銀行': 0.71,
-    'JRE BANK': 1.00,
-    'SBI銀行': 1.00,
-    'SBI証券': 1.00,
-    'SMBC日興証券': 1.00,
-    'クラウドクレジット': 1.00,
-    '拠出型年金': 1.00,
-    'DMM FX': 1.00,
-    'JALマイル': 1.50,
-    'e-JALポイント': 1.00,
-    'ANAマイル': 1.50,
-    'ANAコイン': 1.00,
-    'メトポ': 1.35,
-    '楽天ポイント': 0.75,
-    'Pontaポイント': 0.75,
-    'JRE POINT': 0.68,
-    'WAON POINT': 0.75
+    '手持ち': 1.00, 'ゆうちょ銀行': 1.00, 'みずほ銀行': 1.00, '共通口座': 0.71, 'イオン銀行': 0.71,
+    'JRE BANK': 1.00, 'SBI銀行': 1.00, 'SBI証券': 1.00, 'SMBC日興証券': 1.00,
+    'クラウドクレジット': 1.00, '拠出型年金': 1.00, 'DMM FX': 1.00,
+    'JALマイル': 1.50, 'e-JALポイント': 1.00, 'ANAマイル': 1.50, 'ANAコイン': 1.00, 'メトポ': 1.35,
+    '楽天ポイント': 0.75, 'Pontaポイント': 0.75, 'JRE POINT': 0.68, 'WAON POINT': 0.75
   };
-
   const categoryColors = {
-    Cash: '#1f4e79',
-    Bank: '#5b9bd5',
-    Securities: '#d9e2f3',
-    Alternative: '#7f8c8d',
-    Pension: '#2f5597',
-    Point: '#9dc3e6',
-    Mile: '#c9d3d9',
-    Other: '#4f5b66'
+    Cash: '#1f4e79', Bank: '#5b9bd5', Securities: '#d9e2f3', Alternative: '#7f8c8d',
+    Pension: '#2f5597', Point: '#9dc3e6', Mile: '#c9d3d9', Other: '#4f5b66'
   };
 
   function populateAssetNameOptions(category, selectedValue = '') {
@@ -618,7 +423,6 @@
     defaultOption.value = '';
     defaultOption.textContent = 'Select asset name';
     assetNameEl.appendChild(defaultOption);
-
     const options = assetOptions[category] || [];
     options.forEach(name => {
       const option = document.createElement('option');
@@ -626,7 +430,6 @@
       option.textContent = name;
       assetNameEl.appendChild(option);
     });
-
     if (selectedValue && !options.includes(selectedValue)) {
       const customOption = document.createElement('option');
       customOption.value = selectedValue;
@@ -637,36 +440,20 @@
   }
 
   function formatUnitPrice(value) {
-    return Number(value || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
-
-  function formatValueJpy(value) {
-    return Math.floor(Number(value || 0)).toLocaleString();
-  }
-
+  function formatValueJpy(value) { return Math.floor(Number(value || 0)).toLocaleString(); }
   function formatCompactJpy(value) {
     const num = Number(value || 0);
-    if (Math.abs(num) >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    }
+    if (Math.abs(num) >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     return `¥ ${formatValueJpy(num)}`;
   }
-
   function formatYAxisJpy(value) {
     const num = Number(value || 0);
-    if (Math.abs(num) >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    }
+    if (Math.abs(num) >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     return '¥ ' + formatValueJpy(num);
   }
-
-  function getMonth(recordDate) {
-    return (recordDate || '').slice(0, 7);
-  }
-
+  function getMonth(recordDate) { return (recordDate || '').slice(0, 7); }
   function monthEndToday() {
     const now = new Date();
     const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -675,13 +462,11 @@
     const dd = String(last.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   }
-
   function calculateValue() {
     const amount = Number(amountEl.value || 0);
     const unitPrice = Number(unitPriceJpyEl.value || 0);
     calculatedValueEl.value = formatValueJpy(amount * unitPrice);
   }
-
   function applyDefaultUnitPrice(assetName, force = false) {
     if (!assetName) {
       unitPriceHintEl.textContent = 'Select Asset Name to prefill Unit Price.';
@@ -698,7 +483,6 @@
     }
     unitPriceHintEl.textContent = `Default Unit Price for ${assetName}: ${Number(defaultPrice).toFixed(2)} (editable)`;
   }
-
   function hasDuplicateMonthAsset(recordDate, assetName, excludeId = null) {
     const targetMonth = getMonth(recordDate);
     return assetRows.some(row => {
@@ -706,18 +490,15 @@
       return getMonth(row.record_date) === targetMonth && row.asset_name === assetName;
     });
   }
-
   function clearMessages() {
     formSuccessEl.textContent = '';
     formErrorEl.textContent = '';
     tableErrorEl.textContent = '';
   }
-
   function clearAuthMessages() {
     authSuccessEl.textContent = '';
     authErrorEl.textContent = '';
   }
-
   function resetForm() {
     editingId = null;
     formTitleEl.textContent = 'Add Asset Record';
@@ -733,7 +514,6 @@
     unitPriceHintEl.textContent = 'Select Asset Name to prefill Unit Price.';
     clearMessages();
   }
-
   function setEditMode(row) {
     editingId = row.id;
     formTitleEl.textContent = 'Edit Asset Record';
@@ -750,7 +530,6 @@
     clearMessages();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
   function updateAuthUI() {
     if (currentUser) {
       loggedOutAreaEl.classList.add('hidden');
@@ -764,7 +543,6 @@
       currentUserEmailEl.textContent = '';
     }
   }
-
   function getMonthlySummary(rows) {
     const map = new Map();
     rows.forEach(row => {
@@ -772,11 +550,8 @@
       const value = Number(row.amount || 0) * Number(row.unit_price_jpy || 0);
       map.set(month, (map.get(month) || 0) + value);
     });
-    return [...map.entries()]
-      .map(([month, total]) => ({ month, total }))
-      .sort((a, b) => b.month.localeCompare(a.month));
+    return [...map.entries()].map(([month, total]) => ({ month, total })).sort((a, b) => b.month.localeCompare(a.month));
   }
-
   function updateSummaryYearFilter(summary) {
     const years = [...new Set(summary.map(item => item.month.slice(0, 4)))].sort((a, b) => b.localeCompare(a));
     const previousValue = selectedSummaryYear;
@@ -787,7 +562,6 @@
       option.textContent = year;
       summaryYearFilterEl.appendChild(option);
     });
-
     if (previousValue && years.includes(previousValue)) {
       selectedSummaryYear = previousValue;
     } else if (!selectedSummaryYear && years.length) {
@@ -795,21 +569,15 @@
     } else if (selectedSummaryYear && !years.includes(selectedSummaryYear)) {
       selectedSummaryYear = years[0] || '';
     }
-
     summaryYearFilterEl.value = selectedSummaryYear;
   }
-
-  function getSelectedRows() {
-    return assetRows.filter(row => getMonth(row.record_date) === selectedMonth);
-  }
+  function getSelectedRows() { return assetRows.filter(row => getMonth(row.record_date) === selectedMonth); }
 
   function renderSummary() {
     monthSummaryBodyEl.innerHTML = '';
     monthSummaryEmptyEl.textContent = '';
     summaryCaptionEl.textContent = '';
-
     const summary = getMonthlySummary(assetRows);
-
     if (!summary.length) {
       totalValueEl.textContent = '¥ 0';
       totalCaptionEl.textContent = '';
@@ -819,26 +587,21 @@
       summaryYearFilterEl.innerHTML = '<option value="">All Years</option>';
       return;
     }
-
     updateSummaryYearFilter(summary);
-
     let filteredSummary = summary;
     if (selectedSummaryYear) {
       filteredSummary = summary.filter(item => item.month.startsWith(selectedSummaryYear + '-'));
-      summaryCaptionEl.textContent = `${selectedSummaryYear}年のみ表示中（${filteredSummary.length}か月分）`;
+      summaryCaptionEl.textContent = `Showing ${filteredSummary.length} months for ${selectedSummaryYear}.`;
     } else {
-      summaryCaptionEl.textContent = `全期間を表示中（${summary.length}か月分）`;
+      summaryCaptionEl.textContent = `Showing the full period (${summary.length} months).`;
     }
-
     if (!filteredSummary.length) {
       monthSummaryEmptyEl.textContent = 'No monthly summary data found for the selected year.';
       return;
     }
-
     if (!selectedMonth || !filteredSummary.some(x => x.month === selectedMonth)) {
       selectedMonth = filteredSummary[0].month;
     }
-
     filteredSummary.forEach(item => {
       const tr = document.createElement('tr');
       if (item.month === selectedMonth) tr.classList.add('selected-row');
@@ -860,7 +623,6 @@
       td.appendChild(btn);
       monthSummaryBodyEl.appendChild(tr);
     });
-
     const selected = summary.find(x => x.month === selectedMonth);
     totalValueEl.textContent = `¥ ${formatValueJpy(selected ? selected.total : 0)}`;
     totalCaptionEl.textContent = selectedMonth ? `Selected month: ${selectedMonth}` : '';
@@ -870,7 +632,6 @@
     assetTableBodyEl.innerHTML = '';
     emptyMessageEl.textContent = '';
     detailCaptionEl.textContent = selectedMonth ? `Showing details for ${selectedMonth}` : '';
-
     const rows = getSelectedRows().sort((a, b) => {
       const aCategoryOrder = categorySortOrder[a.asset_category] || 999;
       const bCategoryOrder = categorySortOrder[b.asset_category] || 999;
@@ -880,12 +641,10 @@
       if (aAssetOrder !== bAssetOrder) return aAssetOrder - bAssetOrder;
       return (a.asset_name || '').localeCompare(b.asset_name || '');
     });
-
     if (!rows.length) {
       emptyMessageEl.textContent = selectedMonth ? `No asset records found for ${selectedMonth}.` : 'No asset records found.';
       return;
     }
-
     rows.forEach(row => {
       const amount = Number(row.amount || 0);
       const unitPrice = Number(row.unit_price_jpy || 0);
@@ -900,14 +659,12 @@
         <td class="number">${formatValueJpy(value)}</td>
         <td></td>
       `;
-
       const actionTd = tr.lastElementChild;
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
       editBtn.className = 'small-button secondary-button';
       editBtn.textContent = 'Edit';
       editBtn.addEventListener('click', () => setEditMode(row));
-
       const deleteBtn = document.createElement('button');
       deleteBtn.type = 'button';
       deleteBtn.className = 'small-button danger-button';
@@ -923,7 +680,6 @@
         if (editingId === row.id) resetForm();
         loadAssets();
       });
-
       const wrap = document.createElement('div');
       wrap.className = 'actions';
       wrap.appendChild(editBtn);
@@ -940,14 +696,19 @@
       const xScale = scales.x;
       const yScale = scales.y;
       if (!xScale || !yScale || !chartArea) return;
-
+      const selectedCategory = chartCategoryFilterEl.value;
+      const showEveryMonth = !!selectedCategory;
       ctx.save();
       ctx.fillStyle = '#333';
-      ctx.font = '12px Arial';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.font = 'bold 12px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
 
       data.labels.forEach((_, index) => {
+        const shouldShow = showEveryMonth || index % 3 === 0;
+        if (!shouldShow) return;
         let total = 0;
         let highestValue = 0;
         let x = null;
@@ -960,12 +721,13 @@
           total += current;
           highestValue += current;
         });
-
         if (x !== null && total > 0) {
-          const rawY = yScale.getPixelForValue(highestValue) - 8;
-          const minY = chartArea.top + 14;
+          const rawY = yScale.getPixelForValue(highestValue) - 10;
+          const minY = chartArea.top + 16;
           const y = Math.max(rawY, minY);
-          ctx.fillText(formatCompactJpy(total), x, y);
+          const label = formatCompactJpy(total);
+          ctx.strokeText(label, x, y);
+          ctx.fillText(label, x, y);
         }
       });
       ctx.restore();
@@ -982,7 +744,6 @@
       chartEmptyMessageEl.textContent = 'No category trend data found.';
       return;
     }
-
     const monthMap = new Map();
     assetRows.forEach(row => {
       const month = getMonth(row.record_date);
@@ -992,12 +753,10 @@
       const categoryTotals = monthMap.get(month);
       categoryTotals[category] = (categoryTotals[category] || 0) + value;
     });
-
     const labels = [...monthMap.keys()].sort((a, b) => a.localeCompare(b));
     const selectedCategory = chartCategoryFilterEl.value;
     let datasets = [];
     let isStacked = true;
-
     if (selectedCategory) {
       datasets = [{
         label: selectedCategory,
@@ -1008,7 +767,7 @@
         backgroundColor: categoryColors[selectedCategory] || '#1f4e79'
       }];
       isStacked = false;
-      chartSubtitleEl.textContent = `${selectedCategory} の月別推移です。棒の上に各月の値を表示します。`;
+      chartSubtitleEl.textContent = `Shows the monthly trend for ${selectedCategory}. Value labels are displayed for every month.`;
     } else {
       datasets = categoryOrder.map(category => ({
         label: category,
@@ -1018,9 +777,8 @@
         }),
         backgroundColor: categoryColors[category] || '#999999'
       }));
-      chartSubtitleEl.textContent = '積み上げ棒グラフで月別カテゴリ推移を表示します。棒の上に各月の合計値を 35.8M のような百万単位で表示します。';
+      chartSubtitleEl.textContent = 'Shows monthly category totals as a stacked bar chart. Total labels are displayed every three months in All Categories view.';
     }
-
     const ctx = document.getElementById('categoryTrendChart').getContext('2d');
     categoryTrendChart = new Chart(ctx, {
       type: 'bar',
@@ -1030,12 +788,7 @@
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: {
-            top: 28,
-            right: 12,
-            left: 8,
-            bottom: 0
-          }
+          padding: { top: 28, right: 12, left: 8, bottom: 0 }
         },
         plugins: {
           legend: { position: 'bottom' },
@@ -1043,6 +796,11 @@
             callbacks: {
               label: function(context) {
                 return `${context.dataset.label}: ¥ ${formatValueJpy(context.raw)}`;
+              },
+              footer: function(items) {
+                if (!items.length || selectedCategory) return '';
+                const total = items.reduce((sum, item) => sum + Number(item.raw || 0), 0);
+                return `Total: ¥ ${formatValueJpy(total)}`;
               }
             }
           }
@@ -1053,9 +811,7 @@
             stacked: isStacked,
             grace: '12%',
             beginAtZero: true,
-            ticks: {
-              callback: function(value) { return formatYAxisJpy(value); }
-            }
+            ticks: { callback: function(value) { return formatYAxisJpy(value); } }
           }
         }
       }
@@ -1070,7 +826,6 @@
       monthSummaryBodyEl.innerHTML = '';
       assetTableBodyEl.innerHTML = '';
       chartEmptyMessageEl.textContent = '';
-
       const queryPromise = client.from('assets').select('*');
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Timed out after 10 seconds while loading assets.')), 10000);
@@ -1078,7 +833,6 @@
       const result = await Promise.race([queryPromise, timeoutPromise]);
       const { data, error } = result;
       if (error) throw error;
-
       assetRows = (data || []).map(row => ({
         id: row.id,
         record_date: row.record_date,
@@ -1091,7 +845,6 @@
       renderSummary();
       renderDetails();
       renderCategoryTrendChart();
-
       if (!assetRows.length) {
         totalCaptionEl.textContent = 'Loaded successfully, but no asset rows were returned.';
       }
@@ -1107,13 +860,11 @@
   async function saveRecord(event) {
     event.preventDefault();
     clearMessages();
-
     const record_date = recordDateEl.value;
     const asset_category = assetCategoryEl.value;
     const asset_name = assetNameEl.value;
     const amount = Number(amountEl.value);
     const unit_price_jpy = Number(unitPriceJpyEl.value);
-
     if (!record_date || !asset_category || !asset_name) {
       formErrorEl.textContent = 'Please fill in Record Date, Category, and Asset Name.';
       return;
@@ -1126,11 +877,9 @@
       formErrorEl.textContent = 'A record for the same month and the same Asset Name already exists.';
       return;
     }
-
     saveButtonEl.disabled = true;
     saveButtonEl.textContent = editingId === null ? 'Saving...' : 'Updating...';
     const payload = { record_date, asset_category, asset_name, amount, unit_price_jpy };
-
     try {
       if (editingId === null) {
         const { error } = await client.from('assets').insert([payload]);
@@ -1139,7 +888,6 @@
         const { error } = await client.from('assets').update(payload).eq('id', editingId);
         if (error) throw error;
       }
-
       selectedMonth = getMonth(record_date);
       formSuccessEl.textContent = editingId === null ? 'Saved successfully.' : 'Updated successfully.';
       resetForm();
