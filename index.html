@@ -131,6 +131,7 @@
     th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: middle; }
     th { background: #f0f0f0; }
     .number { text-align: right; }
+    .nowrap { white-space: nowrap; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .selected-row { background: #eef6ff; }
     .empty-message { color: #666; font-style: italic; padding-top: 12px; }
@@ -155,7 +156,7 @@
   <div class="card">
     <h1>
       Personal Asset Manager
-      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.13</span>
+      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.14</span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
   </div>
@@ -216,7 +217,7 @@
       </div>
       <div class="chart-container"><canvas id="categoryTrendChart"></canvas></div>
       <div id="chartEmptyMessage" class="empty-message"></div>
-      <div id="chartSubtitle" class="section-note">Shows monthly category totals as a stacked bar chart. In All Categories view, total labels are shown every three months. In single-category view, labels are shown for every month.</div>
+      <div id="chartSubtitle" class="section-note">Shows monthly category totals as a bar chart. Value labels are displayed every three months to keep the chart readable over long periods.</div>
     </div>
 
     <div class="card">
@@ -247,7 +248,7 @@
       <div id="monthSummaryEmpty" class="empty-message"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="assetFormCard">
       <h2>
         <span id="formTitle">Add Asset Record</span>
         <span id="formModeBadge" class="mode-badge hidden"></span>
@@ -319,12 +320,13 @@
       <table>
         <thead>
           <tr>
-            <th>Date</th>
+            <th>Month</th>
             <th>Category</th>
             <th>Asset Name</th>
             <th>Amount</th>
             <th>Unit Price (JPY)</th>
             <th>Value (JPY)</th>
+            <th>Last Updated</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -379,6 +381,7 @@
   const clearButtonEl = document.getElementById('clearButton');
   const formSuccessEl = document.getElementById('formSuccess');
   const formErrorEl = document.getElementById('formError');
+  const assetFormCardEl = document.getElementById('assetFormCard');
 
   let assetRows = [];
   let selectedMonth = '';
@@ -454,6 +457,20 @@
     return '¥ ' + formatValueJpy(num);
   }
   function getMonth(recordDate) { return (recordDate || '').slice(0, 7); }
+  function formatMonth(recordDate) {
+    return getMonth(recordDate) || '-';
+  }
+  function formatDateTime(value) {
+    if (!value) return '-';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value).slice(0, 16).replace('T', ' ');
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  }
   function monthEndToday() {
     const now = new Date();
     const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -528,7 +545,7 @@
     applyDefaultUnitPrice(row.asset_name || '', false);
     calculateValue();
     clearMessages();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    assetFormCardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   function updateAuthUI() {
     if (currentUser) {
@@ -651,12 +668,13 @@
       const value = amount * unitPrice;
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${row.record_date || ''}</td>
+        <td>${formatMonth(row.record_date)}</td>
         <td>${row.asset_category || ''}</td>
         <td>${row.asset_name || ''}</td>
         <td class="number">${formatValueJpy(amount)}</td>
         <td class="number">${formatUnitPrice(unitPrice)}</td>
         <td class="number">${formatValueJpy(value)}</td>
+        <td class="nowrap">${formatDateTime(row.updated_at || row.created_at)}</td>
         <td></td>
       `;
       const actionTd = tr.lastElementChild;
@@ -697,7 +715,8 @@
       const yScale = scales.y;
       if (!xScale || !yScale || !chartArea) return;
       const selectedCategory = chartCategoryFilterEl.value;
-      const showEveryMonth = !!selectedCategory;
+      // To keep the chart readable over a long period, labels are shown every three months for all filter modes.
+      const showEveryMonth = false;
       ctx.save();
       ctx.fillStyle = '#333';
       ctx.strokeStyle = '#ffffff';
@@ -707,7 +726,7 @@
       ctx.textBaseline = 'bottom';
 
       data.labels.forEach((_, index) => {
-        const shouldShow = showEveryMonth || index % 3 === 0;
+        const shouldShow = index % 3 === 0;
         if (!shouldShow) return;
         let total = 0;
         let highestValue = 0;
@@ -726,7 +745,28 @@
           const minY = chartArea.top + 16;
           const y = Math.max(rawY, minY);
           const label = formatCompactJpy(total);
-          ctx.strokeText(label, x, y);
+          const metrics = ctx.measureText(label);
+          const paddingX = 5;
+          const paddingY = 3;
+          const boxWidth = metrics.width + paddingX * 2;
+          const boxHeight = 17;
+          const boxX = x - boxWidth / 2;
+          const boxY = y - boxHeight + 2;
+          ctx.save();
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+          ctx.strokeStyle = 'rgba(120, 120, 120, 0.35)';
+          ctx.lineWidth = 1;
+          if (ctx.roundRect) {
+            ctx.beginPath();
+            ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 5);
+            ctx.fill();
+            ctx.stroke();
+          } else {
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+          }
+          ctx.restore();
+          ctx.fillStyle = '#333';
           ctx.fillText(label, x, y);
         }
       });
@@ -767,7 +807,7 @@
         backgroundColor: categoryColors[selectedCategory] || '#1f4e79'
       }];
       isStacked = false;
-      chartSubtitleEl.textContent = `Shows the monthly trend for ${selectedCategory}. Value labels are displayed for every month.`;
+      chartSubtitleEl.textContent = `Shows the monthly trend for ${selectedCategory}. Value labels are displayed every three months to keep the chart readable.`;
     } else {
       datasets = categoryOrder.map(category => ({
         label: category,
@@ -777,7 +817,7 @@
         }),
         backgroundColor: categoryColors[category] || '#999999'
       }));
-      chartSubtitleEl.textContent = 'Shows monthly category totals as a stacked bar chart. Total labels are displayed every three months in All Categories view.';
+      chartSubtitleEl.textContent = 'Shows monthly category totals as a stacked bar chart. Total labels are displayed every three months to keep the chart readable.';
     }
     const ctx = document.getElementById('categoryTrendChart').getContext('2d');
     categoryTrendChart = new Chart(ctx, {
@@ -839,7 +879,9 @@
         asset_category: row.asset_category,
         asset_name: row.asset_name,
         amount: row.amount,
-        unit_price_jpy: row.unit_price_jpy
+        unit_price_jpy: row.unit_price_jpy,
+        updated_at: row.updated_at,
+        created_at: row.created_at
       }));
       assetRows.sort((a, b) => (b.record_date || '').localeCompare(a.record_date || ''));
       renderSummary();
