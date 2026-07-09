@@ -156,7 +156,7 @@
   <div class="card">
     <h1>
       Personal Asset Manager
-      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.17</span>
+      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.18</span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
   </div>
@@ -966,14 +966,34 @@
       monthSummaryBodyEl.innerHTML = '';
       assetTableBodyEl.innerHTML = '';
       chartEmptyMessageEl.textContent = '';
-      const queryPromise = client.from('assets').select('*');
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Timed out after 10 seconds while loading assets.')), 10000);
-      });
-      const result = await Promise.race([queryPromise, timeoutPromise]);
-      const { data, error } = result;
-      if (error) throw error;
-      assetRows = (data || []).map(row => ({
+      const pageSize = 1000;
+      let from = 0;
+      let allData = [];
+
+      while (true) {
+        const queryPromise = client
+          .from('assets')
+          .select('*')
+          .order('record_date', { ascending: false })
+          .order('id', { ascending: false })
+          .range(from, from + pageSize - 1);
+
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Timed out after 10 seconds while loading assets.')), 10000);
+        });
+
+        const result = await Promise.race([queryPromise, timeoutPromise]);
+        const { data, error } = result;
+        if (error) throw error;
+
+        const pageData = data || [];
+        allData = allData.concat(pageData);
+
+        if (pageData.length < pageSize) break;
+        from += pageSize;
+      }
+
+      assetRows = allData.map(row => ({
         id: row.id,
         record_date: row.record_date,
         asset_category: row.asset_category,
@@ -989,6 +1009,8 @@
       renderCategoryTrendChart();
       if (!assetRows.length) {
         totalCaptionEl.textContent = 'Loaded successfully, but no asset rows were returned.';
+      } else {
+        console.log(`Loaded ${assetRows.length} asset rows from Supabase.`);
       }
     } catch (e) {
       console.error('loadAssets error:', e);
