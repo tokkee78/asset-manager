@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -155,7 +156,7 @@
   <div class="card">
     <h1>
       Personal Asset Manager
-      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.15</span>
+      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.16</span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
   </div>
@@ -236,8 +237,8 @@
         <table>
           <thead>
             <tr>
-              <th>Month</th>
-              <th>Total Asset Value (JPY)</th>
+              <th id="summaryPeriodHeader">Month</th>
+              <th id="summaryValueHeader">Total Asset Value (JPY)</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -358,6 +359,8 @@
   const monthSummaryEmptyEl = document.getElementById('monthSummaryEmpty');
   const summaryYearFilterEl = document.getElementById('summaryYearFilter');
   const summaryCaptionEl = document.getElementById('summaryCaption');
+  const summaryPeriodHeaderEl = document.getElementById('summaryPeriodHeader');
+  const summaryValueHeaderEl = document.getElementById('summaryValueHeader');
   const detailCaptionEl = document.getElementById('detailCaption');
   const assetTableBodyEl = document.getElementById('assetTableBody');
   const emptyMessageEl = document.getElementById('emptyMessage');
@@ -600,20 +603,69 @@
       monthSummaryEmptyEl.textContent = 'No monthly summary data found.';
       selectedMonth = '';
       selectedSummaryYear = '';
+      summaryYearTouched = false;
       summaryYearFilterEl.innerHTML = '<option value="">All Years</option>';
+      summaryPeriodHeaderEl.textContent = 'Month';
+      summaryValueHeaderEl.textContent = 'Total Asset Value (JPY)';
       return;
     }
+
     if (!summaryYearTouched && !selectedSummaryYear) {
       selectedSummaryYear = summary[0].month.slice(0, 4);
     }
     updateSummaryYearFilter(summary);
-    let filteredSummary = summary;
-    if (selectedSummaryYear) {
-      filteredSummary = summary.filter(item => item.month.startsWith(selectedSummaryYear + '-'));
-      summaryCaptionEl.textContent = `Showing ${filteredSummary.length} months for ${selectedSummaryYear}.`;
-    } else {
-      summaryCaptionEl.textContent = `Showing the full period (${summary.length} months).`;
+
+    if (!selectedSummaryYear) {
+      summaryPeriodHeaderEl.textContent = 'Year';
+      summaryValueHeaderEl.textContent = 'Total Asset Value (Latest Month in Year)';
+
+      const yearMap = new Map();
+      summary.forEach(item => {
+        const year = item.month.slice(0, 4);
+        if (!yearMap.has(year) || item.month > yearMap.get(year).month) {
+          yearMap.set(year, { year, month: item.month, total: item.total });
+        }
+      });
+      const yearlySummary = [...yearMap.values()].sort((a, b) => b.year.localeCompare(a.year));
+      summaryCaptionEl.textContent = `Showing yearly summary for the full period (${yearlySummary.length} years). Each value uses the latest available month in that year.`;
+
+      if (!selectedMonth || !yearlySummary.some(x => x.month === selectedMonth)) {
+        selectedMonth = yearlySummary[0].month;
+      }
+
+      yearlySummary.forEach(item => {
+        const tr = document.createElement('tr');
+        if (item.month === selectedMonth) tr.classList.add('selected-row');
+        tr.innerHTML = `
+          <td>${item.year}<div class="section-note">${item.month}</div></td>
+          <td class="number">¥ ${formatValueJpy(item.total)}</td>
+          <td></td>
+        `;
+        const td = tr.lastElementChild;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'small-button';
+        btn.textContent = 'View Details';
+        btn.addEventListener('click', () => {
+          selectedMonth = item.month;
+          renderSummary();
+          renderDetails();
+        });
+        td.appendChild(btn);
+        monthSummaryBodyEl.appendChild(tr);
+      });
+
+      const selected = summary.find(x => x.month === selectedMonth);
+      totalValueEl.textContent = `¥ ${formatValueJpy(selected ? selected.total : 0)}`;
+      totalCaptionEl.textContent = selectedMonth ? `Selected month: ${selectedMonth}` : '';
+      return;
     }
+
+    summaryPeriodHeaderEl.textContent = 'Month';
+    summaryValueHeaderEl.textContent = 'Total Asset Value (JPY)';
+    const filteredSummary = summary.filter(item => item.month.startsWith(selectedSummaryYear + '-'));
+    summaryCaptionEl.textContent = `Showing ${filteredSummary.length} months for ${selectedSummaryYear}.`;
+
     if (!filteredSummary.length) {
       monthSummaryEmptyEl.textContent = 'No monthly summary data found for the selected year.';
       return;
@@ -621,6 +673,7 @@
     if (!selectedMonth || !filteredSummary.some(x => x.month === selectedMonth)) {
       selectedMonth = filteredSummary[0].month;
     }
+
     filteredSummary.forEach(item => {
       const tr = document.createElement('tr');
       if (item.month === selectedMonth) tr.classList.add('selected-row');
@@ -642,6 +695,7 @@
       td.appendChild(btn);
       monthSummaryBodyEl.appendChild(tr);
     });
+
     const selected = summary.find(x => x.month === selectedMonth);
     totalValueEl.textContent = `¥ ${formatValueJpy(selected ? selected.total : 0)}`;
     totalCaptionEl.textContent = selectedMonth ? `Selected month: ${selectedMonth}` : '';
