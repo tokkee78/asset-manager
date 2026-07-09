@@ -156,7 +156,7 @@
   <div class="card">
     <h1>
       Personal Asset Manager
-      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.16</span>
+      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.17</span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
   </div>
@@ -291,6 +291,7 @@
           <label for="unitPriceJpy">Unit Price (JPY)</label>
           <input type="number" id="unitPriceJpy" step="0.01" min="0" placeholder="e.g. 1.00 or 1.50" required />
           <div id="unitPriceHint" class="hint-box">Select Asset Name to prefill Unit Price.</div>
+          <div id="assetMasterStatus" class="hint-box">Asset Master will be loaded after sign-in.</div>
         </div>
 
         <div class="form-group">
@@ -308,7 +309,7 @@
       </form>
 
       <div class="section-note">
-        Unit Price (JPY) is prefilled from the selected Asset Name as an editable default value.
+        Unit Price (JPY) is prefilled from the Asset Master table as an editable default value.
         Value (JPY) is calculated as Amount × Unit Price (JPY) and displayed as a rounded-down integer.
         Duplicate records for the same month and the same Asset Name are blocked.
       </div>
@@ -378,6 +379,7 @@
   const amountEl = document.getElementById('amount');
   const unitPriceJpyEl = document.getElementById('unitPriceJpy');
   const unitPriceHintEl = document.getElementById('unitPriceHint');
+  const assetMasterStatusEl = document.getElementById('assetMasterStatus');
   const calculatedValueEl = document.getElementById('calculatedValue');
   const saveButtonEl = document.getElementById('saveButton');
   const clearButtonEl = document.getElementById('clearButton');
@@ -386,6 +388,7 @@
   const assetFormCardEl = document.getElementById('assetFormCard');
 
   let assetRows = [];
+  let assetMasterRows = [];
   let selectedMonth = '';
   let editingId = null;
   let currentUser = null;
@@ -395,29 +398,21 @@
 
   const categoryOrder = ['Cash', 'Bank', 'Securities', 'Alternative', 'Pension', 'Point', 'Mile', 'Other'];
   const categorySortOrder = { Cash:1, Bank:2, Securities:3, Alternative:4, Pension:5, Point:6, Mile:7, Other:8 };
-  const assetSortOrder = {
-    '手持ち': 1, 'ゆうちょ銀行': 2, 'みずほ銀行': 3, '共通口座': 4, 'イオン銀行': 5, 'JRE BANK': 6, 'SBI銀行': 7,
-    'SBI証券': 8, 'SMBC日興証券': 9, 'クラウドクレジット': 10, '拠出型年金': 11, 'DMM FX': 12,
-    'JALマイル': 13, 'e-JALポイント': 14, 'ANAマイル': 15, 'ANAコイン': 16, 'メトポ': 17,
-    '楽天ポイント': 18, 'Pontaポイント': 19, 'JRE POINT': 20, 'WAON POINT': 21
-  };
-  const assetOptions = {
-    Cash: ['手持ち'],
-    Bank: ['ゆうちょ銀行', 'みずほ銀行', '共通口座', 'イオン銀行', 'JRE BANK', 'SBI銀行'],
-    Securities: ['SBI証券', 'SMBC日興証券'],
-    Alternative: ['クラウドクレジット', 'DMM FX'],
-    Pension: ['拠出型年金'],
-    Point: ['e-JALポイント', 'ANAコイン', 'メトポ', '楽天ポイント', 'Pontaポイント', 'JRE POINT', 'WAON POINT'],
-    Mile: ['JALマイル', 'ANAマイル'],
-    Other: []
-  };
-  const unitPriceDefaults = {
-    '手持ち': 1.00, 'ゆうちょ銀行': 1.00, 'みずほ銀行': 1.00, '共通口座': 0.71, 'イオン銀行': 0.71,
-    'JRE BANK': 1.00, 'SBI銀行': 1.00, 'SBI証券': 1.00, 'SMBC日興証券': 1.00,
-    'クラウドクレジット': 1.00, '拠出型年金': 1.00, 'DMM FX': 1.00,
-    'JALマイル': 1.50, 'e-JALポイント': 1.00, 'ANAマイル': 1.50, 'ANAコイン': 1.00, 'メトポ': 1.35,
-    '楽天ポイント': 0.75, 'Pontaポイント': 0.75, 'JRE POINT': 0.68, 'WAON POINT': 0.75
-  };
+  function getAssetMasterRowsForCategory(category) {
+    return assetMasterRows
+      .filter(row => row.is_active !== false && row.asset_category === category)
+      .sort((a, b) => Number(a.sort_order || 999) - Number(b.sort_order || 999));
+  }
+
+  function getAssetMasterByName(assetName) {
+    return assetMasterRows.find(row => row.asset_name === assetName);
+  }
+
+  function getAssetSortOrder(assetName) {
+    const master = getAssetMasterByName(assetName);
+    return Number(master?.sort_order || 999);
+  }
+
   const categoryColors = {
     Cash: '#1f4e79', Bank: '#5b9bd5', Securities: '#d9e2f3', Alternative: '#7f8c8d',
     Pension: '#2f5597', Point: '#9dc3e6', Mile: '#c9d3d9', Other: '#4f5b66'
@@ -429,19 +424,22 @@
     defaultOption.value = '';
     defaultOption.textContent = 'Select asset name';
     assetNameEl.appendChild(defaultOption);
-    const options = assetOptions[category] || [];
-    options.forEach(name => {
+
+    const rows = getAssetMasterRowsForCategory(category);
+    rows.forEach(row => {
       const option = document.createElement('option');
-      option.value = name;
-      option.textContent = name;
+      option.value = row.asset_name;
+      option.textContent = row.asset_name;
       assetNameEl.appendChild(option);
     });
-    if (selectedValue && !options.includes(selectedValue)) {
+
+    if (selectedValue && !rows.some(row => row.asset_name === selectedValue)) {
       const customOption = document.createElement('option');
       customOption.value = selectedValue;
       customOption.textContent = selectedValue;
       assetNameEl.appendChild(customOption);
     }
+
     assetNameEl.value = selectedValue || '';
   }
 
@@ -492,17 +490,27 @@
       unitPriceHintEl.textContent = 'Select Asset Name to prefill Unit Price.';
       return;
     }
-    const defaultPrice = unitPriceDefaults[assetName];
-    if (defaultPrice === undefined) {
-      unitPriceHintEl.textContent = `No default Unit Price registered for ${assetName}.`;
+
+    const master = getAssetMasterByName(assetName);
+    if (!master) {
+      unitPriceHintEl.textContent = `No Asset Master record found for ${assetName}.`;
       return;
     }
+
+    const defaultPrice = Number(master.unit_price_jpy);
+    if (Number.isNaN(defaultPrice)) {
+      unitPriceHintEl.textContent = `Invalid Unit Price in Asset Master for ${assetName}.`;
+      return;
+    }
+
     if (force || !unitPriceJpyEl.value) {
-      unitPriceJpyEl.value = Number(defaultPrice).toFixed(2);
+      unitPriceJpyEl.value = defaultPrice.toFixed(2);
       calculateValue();
     }
-    unitPriceHintEl.textContent = `Default Unit Price for ${assetName}: ${Number(defaultPrice).toFixed(2)} (editable)`;
+
+    unitPriceHintEl.textContent = `Default Unit Price for ${assetName}: ${defaultPrice.toFixed(2)} (from Asset Master, editable)`;
   }
+
   function hasDuplicateMonthAsset(recordDate, assetName, excludeId = null) {
     const targetMonth = getMonth(recordDate);
     return assetRows.some(row => {
@@ -709,8 +717,8 @@
       const aCategoryOrder = categorySortOrder[a.asset_category] || 999;
       const bCategoryOrder = categorySortOrder[b.asset_category] || 999;
       if (aCategoryOrder !== bCategoryOrder) return aCategoryOrder - bCategoryOrder;
-      const aAssetOrder = assetSortOrder[a.asset_name] || 999;
-      const bAssetOrder = assetSortOrder[b.asset_name] || 999;
+      const aAssetOrder = getAssetSortOrder(a.asset_name);
+      const bAssetOrder = getAssetSortOrder(b.asset_name);
       if (aAssetOrder !== bAssetOrder) return aAssetOrder - bAssetOrder;
       return (a.asset_name || '').localeCompare(b.asset_name || '');
     });
@@ -923,6 +931,33 @@
     });
   }
 
+  async function loadAssetMaster() {
+    assetMasterStatusEl.textContent = 'Loading Asset Master...';
+    const { data, error } = await client
+      .from('asset_master')
+      .select('asset_category, asset_name, unit_price_jpy, sort_order, is_active')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (error) {
+      assetMasterRows = [];
+      assetMasterStatusEl.textContent = 'Asset Master load failed: ' + error.message;
+      throw error;
+    }
+
+    assetMasterRows = data || [];
+    assetMasterStatusEl.textContent = `Asset Master loaded: ${assetMasterRows.length} active assets.`;
+
+    if (assetCategoryEl.value) {
+      populateAssetNameOptions(assetCategoryEl.value, assetNameEl.value);
+    }
+  }
+
+  async function initializeAppData() {
+    await loadAssetMaster();
+    await loadAssets();
+  }
+
   async function loadAssets() {
     try {
       tableErrorEl.textContent = '';
@@ -1047,7 +1082,7 @@
       if (error) console.error(error);
       currentUser = data?.session?.user ?? null;
       updateAuthUI();
-      if (currentUser) loadAssets();
+      if (currentUser) initializeAppData();
     } catch (e) {
       console.error('initializeAuth failed:', e);
       authErrorEl.textContent = 'initializeAuth failed: ' + (e.message || JSON.stringify(e));
@@ -1058,9 +1093,11 @@
     currentUser = session?.user ?? null;
     updateAuthUI();
     if (currentUser) {
-      loadAssets();
+      initializeAppData();
     } else {
       assetRows = [];
+      assetMasterRows = [];
+      assetMasterStatusEl.textContent = 'Asset Master will be loaded after sign-in.';
       selectedMonth = '';
       selectedSummaryYear = '';
       summaryYearTouched = false;
