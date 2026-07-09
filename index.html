@@ -156,7 +156,7 @@
   <div class="card">
     <h1>
       Personal Asset Manager
-      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.14</span>
+      <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v1.2.15</span>
     </h1>
     <div class="muted">Asset records loaded from Supabase</div>
   </div>
@@ -202,7 +202,7 @@
           <div class="section-control-chip">
             <label for="chartCategoryFilter">Category Filter</label>
             <select id="chartCategoryFilter">
-              <option value="">All Categories</option>
+              <option value="">All</option>
               <option value="Cash">Cash</option>
               <option value="Bank">Bank</option>
               <option value="Securities">Securities</option>
@@ -217,7 +217,7 @@
       </div>
       <div class="chart-container"><canvas id="categoryTrendChart"></canvas></div>
       <div id="chartEmptyMessage" class="empty-message"></div>
-      <div id="chartSubtitle" class="section-note">Shows monthly category totals as a bar chart. Value labels are displayed every three months to keep the chart readable over long periods.</div>
+      <div id="chartSubtitle" class="section-note">Shows monthly category totals as a chart. Value labels are displayed at 0%, 25%, 50%, 75%, and 100% points to keep long-term trends readable.</div>
     </div>
 
     <div class="card">
@@ -389,6 +389,7 @@
   let currentUser = null;
   let categoryTrendChart = null;
   let selectedSummaryYear = '';
+  let summaryYearTouched = false;
 
   const categoryOrder = ['Cash', 'Bank', 'Securities', 'Alternative', 'Pension', 'Point', 'Mile', 'Other'];
   const categorySortOrder = { Cash:1, Bank:2, Securities:3, Alternative:4, Pension:5, Point:6, Mile:7, Other:8 };
@@ -581,11 +582,10 @@
     });
     if (previousValue && years.includes(previousValue)) {
       selectedSummaryYear = previousValue;
-    } else if (!selectedSummaryYear && years.length) {
-      selectedSummaryYear = years[0];
-    } else if (selectedSummaryYear && !years.includes(selectedSummaryYear)) {
+    } else if (previousValue && !years.includes(previousValue)) {
       selectedSummaryYear = years[0] || '';
     }
+    // Keep All Years selected when the user selects it. Do not automatically switch back to the latest year.
     summaryYearFilterEl.value = selectedSummaryYear;
   }
   function getSelectedRows() { return assetRows.filter(row => getMonth(row.record_date) === selectedMonth); }
@@ -603,6 +603,9 @@
       selectedSummaryYear = '';
       summaryYearFilterEl.innerHTML = '<option value="">All Years</option>';
       return;
+    }
+    if (!summaryYearTouched && !selectedSummaryYear) {
+      selectedSummaryYear = summary[0].month.slice(0, 4);
     }
     updateSummaryYearFilter(summary);
     let filteredSummary = summary;
@@ -725,8 +728,17 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
 
+      const lastIndex = data.labels.length - 1;
+      const labelPoints = new Set([
+        0,
+        Math.floor(lastIndex * 0.25),
+        Math.floor(lastIndex * 0.50),
+        Math.floor(lastIndex * 0.75),
+        lastIndex
+      ]);
+
       data.labels.forEach((_, index) => {
-        const shouldShow = index % 3 === 0;
+        const shouldShow = labelPoints.has(index);
         if (!shouldShow) return;
         let total = 0;
         let highestValue = 0;
@@ -807,7 +819,7 @@
         backgroundColor: categoryColors[selectedCategory] || '#1f4e79'
       }];
       isStacked = false;
-      chartSubtitleEl.textContent = `Shows the monthly trend for ${selectedCategory}. Value labels are displayed every three months to keep the chart readable.`;
+      chartSubtitleEl.textContent = `Shows the monthly trend for ${selectedCategory}. Value labels are displayed at 0%, 25%, 50%, 75%, and 100% points.`;
     } else {
       datasets = categoryOrder.map(category => ({
         label: category,
@@ -817,7 +829,7 @@
         }),
         backgroundColor: categoryColors[category] || '#999999'
       }));
-      chartSubtitleEl.textContent = 'Shows monthly category totals as a stacked bar chart. Total labels are displayed every three months to keep the chart readable.';
+      chartSubtitleEl.textContent = 'Shows monthly category totals as a stacked bar chart. Total labels are displayed at 0%, 25%, 50%, 75%, and 100% points.';
     }
     const ctx = document.getElementById('categoryTrendChart').getContext('2d');
     categoryTrendChart = new Chart(ctx, {
@@ -998,6 +1010,7 @@
       assetRows = [];
       selectedMonth = '';
       selectedSummaryYear = '';
+      summaryYearTouched = false;
       totalValueEl.textContent = '¥ 0';
       totalCaptionEl.textContent = '';
       monthSummaryBodyEl.innerHTML = '';
@@ -1021,6 +1034,7 @@
   assetNameEl.addEventListener('change', () => applyDefaultUnitPrice(assetNameEl.value, true));
   chartCategoryFilterEl.addEventListener('change', () => renderCategoryTrendChart());
   summaryYearFilterEl.addEventListener('change', () => {
+    summaryYearTouched = true;
     selectedSummaryYear = summaryYearFilterEl.value;
     renderSummary();
     renderDetails();
