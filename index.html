@@ -61,7 +61,7 @@
 </head>
 <body>
   <div class="card">
-    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.0.0</span></h1>
+    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.0.1</span></h1>
     <div class="muted">Hash-based navigation prototype: Dashboard / Records / Asset Master</div>
   </div>
 
@@ -175,10 +175,10 @@
           <div class="form-group"><label for="masterUnitPriceJpy"><strong>Unit Price</strong> (JPY)</label><input type="number" id="masterUnitPriceJpy" step="0.01" min="0" placeholder="e.g. 1.00" required /></div>
           <div class="form-group"><label for="masterSortOrder">Sort Order</label><input type="number" id="masterSortOrder" step="1" min="1" required /></div>
           <div class="form-group"><label for="masterIsActive">Active</label><select id="masterIsActive" required><option value="true">Active</option><option value="false">Inactive</option></select></div>
-          <div class="button-row full-width"><button type="submit" id="masterSaveButton">Save Asset Master</button><button type="button" id="masterClearButton" class="secondary-button">Clear</button></div>
+          <div class="button-row full-width"><button type="submit" id="masterSaveButton">Save Asset Master</button><button type="button" id="masterClearButton" class="secondary-button">Clear</button><button type="button" id="masterRenumberButton" class="secondary-button">Renumber Sort Order</button></div>
           <div id="assetMasterSuccess" class="success full-width"></div><div id="assetMasterError" class="error full-width"></div>
         </form>
-        <div class="section-note">This screen edits the default <strong>Unit Price</strong> used when creating new asset records.</div>
+        <div class="section-note">This screen edits the default <strong>Unit Price</strong> used when creating new asset records. Use <strong>Renumber Sort Order</strong> to reset the current order to 10, 20, 30... so that new assets can be inserted between existing rows.</div>
         <div class="table-wrap" style="margin-top:16px;">
           <table>
             <thead><tr><th>Category</th><th>Asset Name</th><th>Unit Price (JPY)</th><th>Sort Order</th><th>Active</th><th>Last Updated</th><th>Actions</th></tr></thead>
@@ -255,6 +255,7 @@
   const masterIsActiveEl = document.getElementById('masterIsActive');
   const masterSaveButtonEl = document.getElementById('masterSaveButton');
   const masterClearButtonEl = document.getElementById('masterClearButton');
+  const masterRenumberButtonEl = document.getElementById('masterRenumberButton');
   const assetMasterSuccessEl = document.getElementById('assetMasterSuccess');
   const assetMasterErrorEl = document.getElementById('assetMasterError');
   const assetMasterTableBodyEl = document.getElementById('assetMasterTableBody');
@@ -342,6 +343,8 @@
   function setAssetMasterEditMode(row) { editingAssetMasterId=row.id; assetMasterFormTitleEl.textContent='Edit Asset Master'; assetMasterModeBadgeEl.classList.remove('hidden'); assetMasterModeBadgeEl.textContent=`Editing ID: ${row.id}`; masterSaveButtonEl.textContent='Update Asset Master'; masterAssetCategoryEl.value=row.asset_category||''; masterAssetNameEl.value=row.asset_name||''; masterUnitPriceJpyEl.value=Number(row.unit_price_jpy||0).toFixed(2); masterSortOrderEl.value=row.sort_order||999; masterIsActiveEl.value=row.is_active===false?'false':'true'; navigateToPage('asset-master'); assetMasterCardEl.scrollIntoView({behavior:'smooth',block:'start'}); }
   function renderAssetMasterTable() { assetMasterTableBodyEl.innerHTML=''; assetMasterEmptyEl.textContent=''; if(!assetMasterRows.length){assetMasterEmptyEl.textContent='No asset master records found.';return;} [...assetMasterRows].sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999)).forEach(row=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.asset_category||''}</td><td>${row.asset_name||''}</td><td class="number">${formatUnitPrice(row.unit_price_jpy)}</td><td class="number">${row.sort_order||''}</td><td>${row.is_active===false?'Inactive':'Active'}</td><td class="nowrap">${formatDateTime(row.updated_at||row.created_at)}</td><td></td>`; const btn=document.createElement('button'); btn.type='button'; btn.className='small-button secondary-button'; btn.textContent='Edit'; btn.onclick=()=>setAssetMasterEditMode(row); tr.lastElementChild.appendChild(btn); assetMasterTableBodyEl.appendChild(tr); }); }
 
+  async function renumberAssetMasterSortOrder() { assetMasterErrorEl.textContent=''; assetMasterSuccessEl.textContent=''; if(!assetMasterRows.length){assetMasterErrorEl.textContent='No Asset Master rows to renumber.'; return;} const ok=confirm('Renumber Sort Order based on the current displayed order?\n\nThe new numbers will be 10, 20, 30... so that future assets can be inserted between existing rows.'); if(!ok) return; masterRenumberButtonEl.disabled=true; masterRenumberButtonEl.textContent='Renumbering...'; try{ const rows=[...assetMasterRows].sort((a,b)=>{ const sortDiff=Number(a.sort_order||999)-Number(b.sort_order||999); if(sortDiff!==0) return sortDiff; const catDiff=(a.asset_category||'').localeCompare(b.asset_category||''); if(catDiff!==0) return catDiff; return (a.asset_name||'').localeCompare(b.asset_name||''); }); for(let i=0;i<rows.length;i++){ const newSortOrder=(i+1)*10; if(Number(rows[i].sort_order)!==newSortOrder){ const {error}=await client.from('asset_master').update({sort_order:newSortOrder}).eq('id',rows[i].id); if(error) throw error; } } assetMasterSuccessEl.textContent='Sort Order renumbered successfully. Current order is now 10, 20, 30...'; resetAssetMasterForm(); await loadAssetMaster(); }catch(e){ console.error(e); assetMasterErrorEl.textContent='Error renumbering Sort Order: '+(e.message||JSON.stringify(e)); }finally{ masterRenumberButtonEl.disabled=false; masterRenumberButtonEl.textContent='Renumber Sort Order'; } }
+
   async function saveAssetMaster(event) { event.preventDefault(); assetMasterErrorEl.textContent=''; assetMasterSuccessEl.textContent=''; const payload={asset_category:masterAssetCategoryEl.value,asset_name:masterAssetNameEl.value.trim(),unit_price_jpy:Number(masterUnitPriceJpyEl.value),sort_order:Number(masterSortOrderEl.value),is_active:masterIsActiveEl.value==='true'}; if(!payload.asset_category||!payload.asset_name){assetMasterErrorEl.textContent='Please fill in Category and Asset Name.';return;} if(Number.isNaN(payload.unit_price_jpy)||payload.unit_price_jpy<0){assetMasterErrorEl.textContent='Please enter a valid Unit Price.';return;} if(Number.isNaN(payload.sort_order)||payload.sort_order<1){assetMasterErrorEl.textContent='Please enter a valid Sort Order.';return;} masterSaveButtonEl.disabled=true; masterSaveButtonEl.textContent=editingAssetMasterId===null?'Saving...':'Updating...'; try{ if(editingAssetMasterId===null){const {error}=await client.from('asset_master').insert([payload]); if(error)throw error; assetMasterSuccessEl.textContent='Asset Master saved successfully.';}else{const {error}=await client.from('asset_master').update(payload).eq('id',editingAssetMasterId); if(error)throw error; assetMasterSuccessEl.textContent='Asset Master updated successfully.';} resetAssetMasterForm(); await loadAssetMaster(); }catch(e){assetMasterErrorEl.textContent='Error saving Asset Master: '+(e.message||JSON.stringify(e));}finally{masterSaveButtonEl.disabled=false; masterSaveButtonEl.textContent=editingAssetMasterId===null?'Save Asset Master':'Update Asset Master';} }
 
   async function loadAssetMaster() { assetMasterStatusEl.textContent='Loading Asset Master...'; const {data,error}=await client.from('asset_master').select('id, asset_category, asset_name, unit_price_jpy, sort_order, is_active, updated_at, created_at').order('sort_order',{ascending:true}); if(error){assetMasterRows=[]; assetMasterStatusEl.textContent='Asset Master load failed: '+error.message; throw error;} assetMasterRows=data||[]; assetMasterStatusEl.textContent=`Asset Master loaded: ${assetMasterRows.filter(r=>r.is_active!==false).length} active assets.`; populateCategorySelects(); if(assetCategoryEl.value) populateAssetNameOptions(assetCategoryEl.value, assetNameEl.value); renderAssetMasterTable(); }
@@ -366,6 +369,7 @@
   clearButtonEl.addEventListener('click', resetForm);
   assetFormEl.addEventListener('submit', saveRecord);
   masterClearButtonEl.addEventListener('click', resetAssetMasterForm);
+  masterRenumberButtonEl.addEventListener('click', renumberAssetMasterSortOrder);
   assetMasterFormEl.addEventListener('submit', saveAssetMaster);
   sendMagicLinkButtonEl.addEventListener('click', sendMagicLink);
   logoutButtonEl.addEventListener('click', logout);
