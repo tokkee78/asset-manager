@@ -15,7 +15,7 @@
     .hidden { display: none !important; }
     .success { color: #0a7a28; margin-top: 10px; white-space: pre-wrap; }
     .error { color: #c62828; margin-top: 10px; white-space: pre-wrap; }
-    .nav-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .nav-row, .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .nav-button { background: #eee; color: #222; border: 1px solid #ddd; }
     .nav-button:hover { background: #ddd; }
     .nav-button.active { background: #222; color: #fff; }
@@ -35,8 +35,8 @@
     .chart-header, .summary-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
     .chart-title-row, .summary-title-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
     .section-control-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid #d9d9d9; border-radius: 999px; background: #fafafa; }
-    .section-control-chip label { margin: 0; font-size: 13px; color: #666; }
-    .section-control-chip select { min-width: 190px; padding: 8px 10px; border-radius: 999px; background: #fff; }
+    .section-control-chip label { margin: 0; font-size: 13px; color: #666; white-space: nowrap; }
+    .section-control-chip select { min-width: 160px; padding: 8px 10px; border-radius: 999px; background: #fff; }
     .chart-container { position: relative; width: 100%; height: 430px; }
     .table-wrap { max-height: 520px; overflow: auto; border: 1px solid #ececec; border-radius: 10px; }
     table { width: 100%; border-collapse: collapse; background: #fff; }
@@ -61,132 +61,51 @@
 </head>
 <body>
   <div class="card">
-    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.0.1</span></h1>
-    <div class="muted">Hash-based navigation prototype: Dashboard / Records / Asset Master</div>
+    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.0.2</span></h1>
+    <div class="muted">Hash-based navigation with period and asset filters for Category Trend</div>
   </div>
 
   <div class="card">
     <h2>Authentication</h2>
     <div id="loggedOutArea">
-      <div class="form-group" style="max-width:420px;">
-        <label for="emailInput">Email Address</label>
-        <input type="email" id="emailInput" placeholder="your-email@example.com" />
-      </div>
+      <div class="form-group" style="max-width:420px;"><label for="emailInput">Email Address</label><input type="email" id="emailInput" placeholder="your-email@example.com" /></div>
       <div class="button-row"><button type="button" id="sendMagicLinkButton">Send Magic Link</button></div>
-      <div id="authSuccess" class="success"></div>
-      <div id="authError" class="error"></div>
+      <div id="authSuccess" class="success"></div><div id="authError" class="error"></div>
       <div class="section-note" style="margin-top:12px;">Enter your email address and click <strong>Send Magic Link</strong>. Then open the email and click the sign-in link.</div>
     </div>
-    <div id="loggedInArea" class="hidden">
-      <div class="section-note">Logged in as</div>
-      <div id="currentUserEmail" style="font-weight:bold;"></div>
-      <div class="button-row"><button type="button" id="logoutButton" class="secondary-button">Logout</button></div>
-    </div>
+    <div id="loggedInArea" class="hidden"><div class="section-note">Logged in as</div><div id="currentUserEmail" style="font-weight:bold;"></div><div class="button-row"><button type="button" id="logoutButton" class="secondary-button">Logout</button></div></div>
   </div>
 
   <div id="appArea" class="hidden">
-    <div class="card" id="navigationArea">
-      <div class="nav-row">
-        <button type="button" class="nav-button" data-page="dashboard">Dashboard</button>
-        <button type="button" class="nav-button" data-page="records">Records</button>
-        <button type="button" class="nav-button" data-page="asset-master">Asset Master</button>
-      </div>
-      <div class="section-note" style="margin-top:10px;">Current URL hash controls the screen. Example: <code>#dashboard</code>, <code>#records</code>, <code>#asset-master</code>.</div>
-    </div>
+    <div class="card" id="navigationArea"><div class="nav-row"><button type="button" class="nav-button" data-page="dashboard">Dashboard</button><button type="button" class="nav-button" data-page="records">Records</button><button type="button" class="nav-button" data-page="asset-master">Asset Master</button></div><div class="section-note" style="margin-top:10px;">URL hash controls the screen: <code>#dashboard</code>, <code>#records</code>, <code>#asset-master</code>.</div></div>
 
     <div id="dashboardPage" class="page-section">
-      <div class="card">
-        <h2>Selected Month Total Asset Value</h2>
-        <div id="totalValue" class="summary-value">Loading...</div>
-        <div id="totalCaption" class="section-note"></div>
-      </div>
+      <div class="card"><h2>Selected Month Total Asset Value</h2><div id="totalValue" class="summary-value">Loading...</div><div id="totalCaption" class="section-note"></div></div>
 
       <div class="card">
-        <div class="chart-header">
-          <div class="chart-title-row">
-            <h2 style="margin:0;">Category Trend</h2>
-            <div class="section-control-chip">
-              <label for="chartCategoryFilter">Category Filter</label>
-              <select id="chartCategoryFilter"><option value="">All</option></select>
-            </div>
-          </div>
+        <div class="chart-header"><div class="chart-title-row"><h2 style="margin:0;">Category Trend</h2></div></div>
+        <div class="filter-row" style="margin-bottom:12px;">
+          <div class="section-control-chip"><label for="chartCategoryFilter">Category</label><select id="chartCategoryFilter"><option value="">All</option></select></div>
+          <div class="section-control-chip"><label for="chartAssetFilter">Asset</label><select id="chartAssetFilter"><option value="">All Assets</option></select></div>
+          <div class="section-control-chip"><label for="chartPeriodPreset">Period</label><select id="chartPeriodPreset"><option value="all">All</option><option value="12">Latest 12M</option><option value="24">Latest 24M</option><option value="36">Latest 36M</option><option value="60">Latest 5Y</option><option value="custom">Custom</option></select></div>
+          <div class="section-control-chip"><label for="chartStartMonth">Start</label><select id="chartStartMonth"></select></div>
+          <div class="section-control-chip"><label for="chartEndMonth">End</label><select id="chartEndMonth"></select></div>
         </div>
         <div class="chart-container"><canvas id="categoryTrendChart"></canvas></div>
-        <div id="chartEmptyMessage" class="empty-message"></div>
-        <div id="chartSubtitle" class="section-note">Shows monthly category totals as a chart. Value labels are displayed at 0%, 25%, 50%, 75%, and 100% points.</div>
+        <div id="chartEmptyMessage" class="empty-message"></div><div id="chartSubtitle" class="section-note">Shows monthly category totals as a chart. Filters can narrow the period and the asset.</div>
       </div>
 
-      <div class="card">
-        <div class="summary-header">
-          <div class="summary-title-row">
-            <h2 style="margin:0;">Monthly Summary</h2>
-            <div class="section-control-chip">
-              <label for="summaryYearFilter">Summary Year</label>
-              <select id="summaryYearFilter"><option value="">All Years</option></select>
-            </div>
-          </div>
-        </div>
-        <div id="summaryCaption" class="section-note" style="margin-bottom:10px;"></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th id="summaryPeriodHeader">Month</th><th id="summaryValueHeader">Total Asset Value (JPY)</th><th>Action</th></tr></thead>
-            <tbody id="monthSummaryBody"></tbody>
-          </table>
-        </div>
-        <div id="monthSummaryEmpty" class="empty-message"></div>
-      </div>
+      <div class="card"><div class="summary-header"><div class="summary-title-row"><h2 style="margin:0;">Monthly Summary</h2><div class="section-control-chip"><label for="summaryYearFilter">Summary Year</label><select id="summaryYearFilter"><option value="">All Years</option></select></div></div></div><div id="summaryCaption" class="section-note" style="margin-bottom:10px;"></div><div class="table-wrap"><table><thead><tr><th id="summaryPeriodHeader">Month</th><th id="summaryValueHeader">Total Asset Value (JPY)</th><th>Action</th></tr></thead><tbody id="monthSummaryBody"></tbody></table></div><div id="monthSummaryEmpty" class="empty-message"></div></div>
     </div>
 
     <div id="recordsPage" class="page-section hidden">
-      <div class="card" id="assetFormCard">
-        <h2><span id="formTitle">Add Asset Record</span><span id="formModeBadge" class="mode-badge hidden"></span></h2>
-        <form id="assetForm">
-          <div class="form-group"><label for="recordDate">Record Date</label><input type="date" id="recordDate" required /></div>
-          <div class="form-group"><label for="assetCategory">Category</label><select id="assetCategory" required><option value="">Select category</option></select></div>
-          <div class="form-group"><label for="assetName">Asset Name</label><select id="assetName" required><option value="">Select asset name</option></select></div>
-          <div class="form-group"><label for="amount">Amount</label><input type="number" id="amount" step="0.01" min="0" required /></div>
-          <div class="form-group"><label for="unitPriceJpy">Unit Price (JPY)</label><input type="number" id="unitPriceJpy" step="0.01" min="0" required /><div id="unitPriceHint" class="hint-box">Select Asset Name to prefill Unit Price.</div><div id="assetMasterStatus" class="hint-box">Asset Master will be loaded after sign-in.</div></div>
-          <div class="form-group"><label for="calculatedValue">Calculated Value (JPY)</label><input type="text" id="calculatedValue" readonly /></div>
-          <div class="button-row full-width"><button type="submit" id="saveButton">Save</button><button type="button" id="clearButton" class="secondary-button">Clear</button></div>
-          <div id="formSuccess" class="success full-width"></div><div id="formError" class="error full-width"></div>
-        </form>
-        <div class="section-note">Unit Price (JPY) is prefilled from the Asset Master table as an editable default value. Existing asset records keep their saved Unit Price values.</div>
-      </div>
+      <div class="card" id="assetFormCard"><h2><span id="formTitle">Add Asset Record</span><span id="formModeBadge" class="mode-badge hidden"></span></h2><form id="assetForm"><div class="form-group"><label for="recordDate">Record Date</label><input type="date" id="recordDate" required /></div><div class="form-group"><label for="assetCategory">Category</label><select id="assetCategory" required><option value="">Select category</option></select></div><div class="form-group"><label for="assetName">Asset Name</label><select id="assetName" required><option value="">Select asset name</option></select></div><div class="form-group"><label for="amount">Amount</label><input type="number" id="amount" step="0.01" min="0" required /></div><div class="form-group"><label for="unitPriceJpy">Unit Price (JPY)</label><input type="number" id="unitPriceJpy" step="0.01" min="0" required /><div id="unitPriceHint" class="hint-box">Select Asset Name to prefill Unit Price.</div><div id="assetMasterStatus" class="hint-box">Asset Master will be loaded after sign-in.</div></div><div class="form-group"><label for="calculatedValue">Calculated Value (JPY)</label><input type="text" id="calculatedValue" readonly /></div><div class="button-row full-width"><button type="submit" id="saveButton">Save</button><button type="button" id="clearButton" class="secondary-button">Clear</button></div><div id="formSuccess" class="success full-width"></div><div id="formError" class="error full-width"></div></form><div class="section-note">Unit Price (JPY) is prefilled from the Asset Master table as an editable default value. Existing asset records keep their saved Unit Price values.</div></div>
 
-      <div class="card">
-        <h2>Selected Month Details</h2>
-        <div id="detailCaption" class="section-note"></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Month</th><th>Category</th><th>Asset Name</th><th>Amount</th><th>Unit Price (JPY)</th><th>Value (JPY)</th><th>Last Updated</th><th>Actions</th></tr></thead>
-            <tbody id="assetTableBody"></tbody>
-          </table>
-        </div>
-        <div id="emptyMessage" class="empty-message"></div><div id="tableError" class="error"></div>
-      </div>
+      <div class="card"><h2>Selected Month Details</h2><div id="detailCaption" class="section-note"></div><div class="table-wrap"><table><thead><tr><th>Month</th><th>Category</th><th>Asset Name</th><th>Amount</th><th>Unit Price (JPY)</th><th>Value (JPY)</th><th>Last Updated</th><th>Actions</th></tr></thead><tbody id="assetTableBody"></tbody></table></div><div id="emptyMessage" class="empty-message"></div><div id="tableError" class="error"></div></div>
     </div>
 
     <div id="assetMasterPage" class="page-section hidden">
-      <div class="card" id="assetMasterCard">
-        <h2><span id="assetMasterFormTitle">Asset Master</span><span id="assetMasterModeBadge" class="mode-badge hidden"></span></h2>
-        <form id="assetMasterForm">
-          <div class="form-group"><label for="masterAssetCategory">Category</label><select id="masterAssetCategory" required><option value="">Select category</option></select></div>
-          <div class="form-group"><label for="masterAssetName">Asset Name</label><input type="text" id="masterAssetName" placeholder="e.g. PayPayポイント" required /></div>
-          <div class="form-group"><label for="masterUnitPriceJpy"><strong>Unit Price</strong> (JPY)</label><input type="number" id="masterUnitPriceJpy" step="0.01" min="0" placeholder="e.g. 1.00" required /></div>
-          <div class="form-group"><label for="masterSortOrder">Sort Order</label><input type="number" id="masterSortOrder" step="1" min="1" required /></div>
-          <div class="form-group"><label for="masterIsActive">Active</label><select id="masterIsActive" required><option value="true">Active</option><option value="false">Inactive</option></select></div>
-          <div class="button-row full-width"><button type="submit" id="masterSaveButton">Save Asset Master</button><button type="button" id="masterClearButton" class="secondary-button">Clear</button><button type="button" id="masterRenumberButton" class="secondary-button">Renumber Sort Order</button></div>
-          <div id="assetMasterSuccess" class="success full-width"></div><div id="assetMasterError" class="error full-width"></div>
-        </form>
-        <div class="section-note">This screen edits the default <strong>Unit Price</strong> used when creating new asset records. Use <strong>Renumber Sort Order</strong> to reset the current order to 10, 20, 30... so that new assets can be inserted between existing rows.</div>
-        <div class="table-wrap" style="margin-top:16px;">
-          <table>
-            <thead><tr><th>Category</th><th>Asset Name</th><th>Unit Price (JPY)</th><th>Sort Order</th><th>Active</th><th>Last Updated</th><th>Actions</th></tr></thead>
-            <tbody id="assetMasterTableBody"></tbody>
-          </table>
-        </div>
-        <div id="assetMasterEmpty" class="empty-message"></div>
-      </div>
+      <div class="card" id="assetMasterCard"><h2><span id="assetMasterFormTitle">Asset Master</span><span id="assetMasterModeBadge" class="mode-badge hidden"></span></h2><form id="assetMasterForm"><div class="form-group"><label for="masterAssetCategory">Category</label><select id="masterAssetCategory" required><option value="">Select category</option></select></div><div class="form-group"><label for="masterAssetName">Asset Name</label><input type="text" id="masterAssetName" placeholder="e.g. PayPayポイント" required /></div><div class="form-group"><label for="masterUnitPriceJpy"><strong>Unit Price</strong> (JPY)</label><input type="number" id="masterUnitPriceJpy" step="0.01" min="0" placeholder="e.g. 1.00" required /></div><div class="form-group"><label for="masterSortOrder">Sort Order</label><input type="number" id="masterSortOrder" step="1" min="1" required /></div><div class="form-group"><label for="masterIsActive">Active</label><select id="masterIsActive" required><option value="true">Active</option><option value="false">Inactive</option></select></div><div class="button-row full-width"><button type="submit" id="masterSaveButton">Save Asset Master</button><button type="button" id="masterClearButton" class="secondary-button">Clear</button><button type="button" id="masterRenumberButton" class="secondary-button">Renumber Sort Order</button></div><div id="assetMasterSuccess" class="success full-width"></div><div id="assetMasterError" class="error full-width"></div></form><div class="section-note">This screen edits the default <strong>Unit Price</strong>. Use <strong>Renumber Sort Order</strong> to reset the current order to 10, 20, 30... so that future assets can be inserted between existing rows.</div><div class="table-wrap" style="margin-top:16px;"><table><thead><tr><th>Category</th><th>Asset Name</th><th>Unit Price (JPY)</th><th>Sort Order</th><th>Active</th><th>Last Updated</th><th>Actions</th></tr></thead><tbody id="assetMasterTableBody"></tbody></table></div><div id="assetMasterEmpty" class="empty-message"></div></div>
     </div>
   </div>
 
@@ -198,187 +117,83 @@
 
   const categoryOrder = ['Cash', 'Bank', 'Securities', 'Alternative', 'Pension', 'Point', 'Mile', 'Other'];
   const categoryColors = { Cash:'#1f4e79', Bank:'#5b9bd5', Securities:'#d9e2f3', Alternative:'#7f8c8d', Pension:'#2f5597', Point:'#9dc3e6', Mile:'#c9d3d9', Other:'#4f5b66' };
+  const $ = id => document.getElementById(id);
+  const loggedOutAreaEl=$('loggedOutArea'), loggedInAreaEl=$('loggedInArea'), appAreaEl=$('appArea'), emailInputEl=$('emailInput'), sendMagicLinkButtonEl=$('sendMagicLinkButton'), logoutButtonEl=$('logoutButton'), currentUserEmailEl=$('currentUserEmail'), authSuccessEl=$('authSuccess'), authErrorEl=$('authError');
+  const dashboardPageEl=$('dashboardPage'), recordsPageEl=$('recordsPage'), assetMasterPageEl=$('assetMasterPage'), totalValueEl=$('totalValue'), totalCaptionEl=$('totalCaption'), chartCategoryFilterEl=$('chartCategoryFilter'), chartAssetFilterEl=$('chartAssetFilter'), chartPeriodPresetEl=$('chartPeriodPreset'), chartStartMonthEl=$('chartStartMonth'), chartEndMonthEl=$('chartEndMonth'), chartEmptyMessageEl=$('chartEmptyMessage'), chartSubtitleEl=$('chartSubtitle');
+  const summaryYearFilterEl=$('summaryYearFilter'), summaryCaptionEl=$('summaryCaption'), summaryPeriodHeaderEl=$('summaryPeriodHeader'), summaryValueHeaderEl=$('summaryValueHeader'), monthSummaryBodyEl=$('monthSummaryBody'), monthSummaryEmptyEl=$('monthSummaryEmpty'), detailCaptionEl=$('detailCaption'), assetTableBodyEl=$('assetTableBody'), emptyMessageEl=$('emptyMessage'), tableErrorEl=$('tableError');
+  const assetFormCardEl=$('assetFormCard'), assetFormEl=$('assetForm'), formTitleEl=$('formTitle'), formModeBadgeEl=$('formModeBadge'), recordDateEl=$('recordDate'), assetCategoryEl=$('assetCategory'), assetNameEl=$('assetName'), amountEl=$('amount'), unitPriceJpyEl=$('unitPriceJpy'), unitPriceHintEl=$('unitPriceHint'), assetMasterStatusEl=$('assetMasterStatus'), calculatedValueEl=$('calculatedValue'), saveButtonEl=$('saveButton'), clearButtonEl=$('clearButton'), formSuccessEl=$('formSuccess'), formErrorEl=$('formError');
+  const assetMasterCardEl=$('assetMasterCard'), assetMasterFormEl=$('assetMasterForm'), assetMasterFormTitleEl=$('assetMasterFormTitle'), assetMasterModeBadgeEl=$('assetMasterModeBadge'), masterAssetCategoryEl=$('masterAssetCategory'), masterAssetNameEl=$('masterAssetName'), masterUnitPriceJpyEl=$('masterUnitPriceJpy'), masterSortOrderEl=$('masterSortOrder'), masterIsActiveEl=$('masterIsActive'), masterSaveButtonEl=$('masterSaveButton'), masterClearButtonEl=$('masterClearButton'), masterRenumberButtonEl=$('masterRenumberButton'), assetMasterSuccessEl=$('assetMasterSuccess'), assetMasterErrorEl=$('assetMasterError'), assetMasterTableBodyEl=$('assetMasterTableBody'), assetMasterEmptyEl=$('assetMasterEmpty');
 
-  const loggedOutAreaEl = document.getElementById('loggedOutArea');
-  const loggedInAreaEl = document.getElementById('loggedInArea');
-  const appAreaEl = document.getElementById('appArea');
-  const emailInputEl = document.getElementById('emailInput');
-  const sendMagicLinkButtonEl = document.getElementById('sendMagicLinkButton');
-  const logoutButtonEl = document.getElementById('logoutButton');
-  const currentUserEmailEl = document.getElementById('currentUserEmail');
-  const authSuccessEl = document.getElementById('authSuccess');
-  const authErrorEl = document.getElementById('authError');
-  const dashboardPageEl = document.getElementById('dashboardPage');
-  const recordsPageEl = document.getElementById('recordsPage');
-  const assetMasterPageEl = document.getElementById('assetMasterPage');
-  const totalValueEl = document.getElementById('totalValue');
-  const totalCaptionEl = document.getElementById('totalCaption');
-  const chartCategoryFilterEl = document.getElementById('chartCategoryFilter');
-  const chartEmptyMessageEl = document.getElementById('chartEmptyMessage');
-  const chartSubtitleEl = document.getElementById('chartSubtitle');
-  const summaryYearFilterEl = document.getElementById('summaryYearFilter');
-  const summaryCaptionEl = document.getElementById('summaryCaption');
-  const summaryPeriodHeaderEl = document.getElementById('summaryPeriodHeader');
-  const summaryValueHeaderEl = document.getElementById('summaryValueHeader');
-  const monthSummaryBodyEl = document.getElementById('monthSummaryBody');
-  const monthSummaryEmptyEl = document.getElementById('monthSummaryEmpty');
-  const detailCaptionEl = document.getElementById('detailCaption');
-  const assetTableBodyEl = document.getElementById('assetTableBody');
-  const emptyMessageEl = document.getElementById('emptyMessage');
-  const tableErrorEl = document.getElementById('tableError');
+  let currentUser=null, assetRows=[], assetMasterRows=[], selectedMonth='', selectedSummaryYear='', summaryYearTouched=false, editingId=null, editingAssetMasterId=null, categoryTrendChart=null;
 
-  const assetFormCardEl = document.getElementById('assetFormCard');
-  const assetFormEl = document.getElementById('assetForm');
-  const formTitleEl = document.getElementById('formTitle');
-  const formModeBadgeEl = document.getElementById('formModeBadge');
-  const recordDateEl = document.getElementById('recordDate');
-  const assetCategoryEl = document.getElementById('assetCategory');
-  const assetNameEl = document.getElementById('assetName');
-  const amountEl = document.getElementById('amount');
-  const unitPriceJpyEl = document.getElementById('unitPriceJpy');
-  const unitPriceHintEl = document.getElementById('unitPriceHint');
-  const assetMasterStatusEl = document.getElementById('assetMasterStatus');
-  const calculatedValueEl = document.getElementById('calculatedValue');
-  const saveButtonEl = document.getElementById('saveButton');
-  const clearButtonEl = document.getElementById('clearButton');
-  const formSuccessEl = document.getElementById('formSuccess');
-  const formErrorEl = document.getElementById('formError');
+  function formatValueJpy(v){return Math.floor(Number(v||0)).toLocaleString();}
+  function formatUnitPrice(v){return Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function formatCompactJpy(v){const n=Number(v||0);return Math.abs(n)>=1000000?`${(n/1000000).toFixed(1)}M`:`¥ ${formatValueJpy(n)}`;}
+  function formatYAxisJpy(v){const n=Number(v||0);return Math.abs(n)>=1000000?`${(n/1000000).toFixed(1)}M`:'¥ '+formatValueJpy(n);}
+  function getMonth(d){return (d||'').slice(0,7);}
+  function formatDateTime(v){if(!v)return'-';const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v).slice(0,16).replace('T',' ');return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+  function monthEndToday(){const n=new Date();const l=new Date(n.getFullYear(),n.getMonth()+1,0);return`${l.getFullYear()}-${String(l.getMonth()+1).padStart(2,'0')}-${String(l.getDate()).padStart(2,'0')}`;}
 
-  const assetMasterCardEl = document.getElementById('assetMasterCard');
-  const assetMasterFormEl = document.getElementById('assetMasterForm');
-  const assetMasterFormTitleEl = document.getElementById('assetMasterFormTitle');
-  const assetMasterModeBadgeEl = document.getElementById('assetMasterModeBadge');
-  const masterAssetCategoryEl = document.getElementById('masterAssetCategory');
-  const masterAssetNameEl = document.getElementById('masterAssetName');
-  const masterUnitPriceJpyEl = document.getElementById('masterUnitPriceJpy');
-  const masterSortOrderEl = document.getElementById('masterSortOrder');
-  const masterIsActiveEl = document.getElementById('masterIsActive');
-  const masterSaveButtonEl = document.getElementById('masterSaveButton');
-  const masterClearButtonEl = document.getElementById('masterClearButton');
-  const masterRenumberButtonEl = document.getElementById('masterRenumberButton');
-  const assetMasterSuccessEl = document.getElementById('assetMasterSuccess');
-  const assetMasterErrorEl = document.getElementById('assetMasterError');
-  const assetMasterTableBodyEl = document.getElementById('assetMasterTableBody');
-  const assetMasterEmptyEl = document.getElementById('assetMasterEmpty');
+  function getPageFromHash(){const h=window.location.hash.replace('#','');if(h==='records')return'records';if(h==='asset-master')return'asset-master';return'dashboard';}
+  function showPage(p){({dashboard:dashboardPageEl,records:recordsPageEl,'asset-master':assetMasterPageEl});const pages={dashboard:dashboardPageEl,records:recordsPageEl,'asset-master':assetMasterPageEl};Object.entries(pages).forEach(([n,e])=>e.classList.toggle('hidden',n!==p));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));}
+  function navigateToPage(p){if(window.location.hash!=='#'+p)window.location.hash=p;showPage(p);}
+  function initializeNavigation(){document.querySelectorAll('.nav-button').forEach(b=>b.addEventListener('click',()=>navigateToPage(b.dataset.page)));window.addEventListener('hashchange',()=>showPage(getPageFromHash()));showPage(getPageFromHash());}
 
-  let currentUser = null;
-  let assetRows = [];
-  let assetMasterRows = [];
-  let selectedMonth = '';
-  let selectedSummaryYear = '';
-  let summaryYearTouched = false;
-  let editingId = null;
-  let editingAssetMasterId = null;
-  let categoryTrendChart = null;
+  function activeMasterRows(){return assetMasterRows.filter(r=>r.is_active!==false).sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999));}
+  function getMasterRowsForCategory(c){return activeMasterRows().filter(r=>r.asset_category===c);}
+  function getMasterByName(n){return assetMasterRows.find(r=>r.asset_name===n);}
+  function getAssetSortOrder(n){return Number(getMasterByName(n)?.sort_order||999);}
 
-  function formatValueJpy(value) { return Math.floor(Number(value || 0)).toLocaleString(); }
-  function formatUnitPrice(value) { return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-  function formatCompactJpy(value) { const n = Number(value || 0); return Math.abs(n) >= 1000000 ? `${(n / 1000000).toFixed(1)}M` : `¥ ${formatValueJpy(n)}`; }
-  function formatYAxisJpy(value) { const n = Number(value || 0); return Math.abs(n) >= 1000000 ? `${(n / 1000000).toFixed(1)}M` : '¥ ' + formatValueJpy(n); }
-  function getMonth(recordDate) { return (recordDate || '').slice(0, 7); }
-  function formatDateTime(value) { if (!value) return '-'; const d = new Date(value); if (Number.isNaN(d.getTime())) return String(value).slice(0, 16).replace('T', ' '); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
-  function monthEndToday() { const now = new Date(); const last = new Date(now.getFullYear(), now.getMonth() + 1, 0); return `${last.getFullYear()}-${String(last.getMonth()+1).padStart(2,'0')}-${String(last.getDate()).padStart(2,'0')}`; }
+  function populateCategorySelects(){[assetCategoryEl,masterAssetCategoryEl].forEach(s=>{const selected=s.value;s.innerHTML='<option value="">Select category</option>';categoryOrder.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;s.appendChild(o);});s.value=selected;});populateChartCategoryFilter();}
+  function populateChartCategoryFilter(){const selected=chartCategoryFilterEl.value;chartCategoryFilterEl.innerHTML='<option value="">All</option>';categoryOrder.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;chartCategoryFilterEl.appendChild(o);});chartCategoryFilterEl.value=selected;}
+  function populateChartAssetFilter(){const selected=chartAssetFilterEl.value;const selectedCategory=chartCategoryFilterEl.value;chartAssetFilterEl.innerHTML='<option value="">All Assets</option>';activeMasterRows().filter(r=>!selectedCategory||r.asset_category===selectedCategory).forEach(r=>{const o=document.createElement('option');o.value=r.asset_name;o.textContent=r.asset_name;chartAssetFilterEl.appendChild(o);});if([...chartAssetFilterEl.options].some(o=>o.value===selected))chartAssetFilterEl.value=selected;else chartAssetFilterEl.value='';}
+  function populateAssetNameOptions(c,selected=''){assetNameEl.innerHTML='<option value="">Select asset name</option>';getMasterRowsForCategory(c).forEach(r=>{const o=document.createElement('option');o.value=r.asset_name;o.textContent=r.asset_name;assetNameEl.appendChild(o);});if(selected&&!getMasterByName(selected)){const o=document.createElement('option');o.value=selected;o.textContent=selected;assetNameEl.appendChild(o);}assetNameEl.value=selected||'';}
 
-  function getPageFromHash() { const h = window.location.hash.replace('#', ''); if (h === 'records') return 'records'; if (h === 'asset-master') return 'asset-master'; return 'dashboard'; }
-  function showPage(pageName) { const pages = { dashboard: dashboardPageEl, records: recordsPageEl, 'asset-master': assetMasterPageEl }; Object.entries(pages).forEach(([name, el]) => el.classList.toggle('hidden', name !== pageName)); document.querySelectorAll('.nav-button').forEach(btn => btn.classList.toggle('active', btn.dataset.page === pageName)); }
-  function navigateToPage(pageName) { if (window.location.hash !== '#' + pageName) window.location.hash = pageName; showPage(pageName); }
-  function initializeNavigation() { document.querySelectorAll('.nav-button').forEach(btn => btn.addEventListener('click', () => navigateToPage(btn.dataset.page))); window.addEventListener('hashchange', () => showPage(getPageFromHash())); showPage(getPageFromHash()); }
+  function populateMonthFilters(){const months=[...new Set(assetRows.map(r=>getMonth(r.record_date)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));const oldStart=chartStartMonthEl.value,oldEnd=chartEndMonthEl.value;chartStartMonthEl.innerHTML='';chartEndMonthEl.innerHTML='';months.forEach(m=>{const a=document.createElement('option');a.value=m;a.textContent=m;chartStartMonthEl.appendChild(a);const b=document.createElement('option');b.value=m;b.textContent=m;chartEndMonthEl.appendChild(b);});if(months.length){chartStartMonthEl.value=oldStart&&months.includes(oldStart)?oldStart:months[0];chartEndMonthEl.value=oldEnd&&months.includes(oldEnd)?oldEnd:months[months.length-1];}applyPeriodPreset(false);}
+  function applyPeriodPreset(render=true){const months=[...new Set(assetRows.map(r=>getMonth(r.record_date)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));if(!months.length)return;const preset=chartPeriodPresetEl.value;if(preset==='all'){chartStartMonthEl.value=months[0];chartEndMonthEl.value=months[months.length-1];}else if(preset!=='custom'){const n=Number(preset);const startIndex=Math.max(0,months.length-n);chartStartMonthEl.value=months[startIndex];chartEndMonthEl.value=months[months.length-1];}if(chartStartMonthEl.value>chartEndMonthEl.value)chartStartMonthEl.value=chartEndMonthEl.value;if(render)renderCategoryTrendChart();}
 
-  function populateCategorySelects() {
-    [assetCategoryEl, masterAssetCategoryEl, chartCategoryFilterEl].forEach(select => {
-      const selected = select.value;
-      const firstLabel = select === chartCategoryFilterEl ? 'All' : 'Select category';
-      const firstValue = select === chartCategoryFilterEl ? '' : '';
-      select.innerHTML = `<option value="${firstValue}">${firstLabel}</option>`;
-      categoryOrder.forEach(cat => { const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat; select.appendChild(opt); });
-      select.value = selected;
-    });
-  }
+  function calculateValue(){calculatedValueEl.value=formatValueJpy(Number(amountEl.value||0)*Number(unitPriceJpyEl.value||0));}
+  function applyDefaultUnitPrice(name,force=false){if(!name){unitPriceHintEl.textContent='Select Asset Name to prefill Unit Price.';return;}const m=getMasterByName(name);if(!m){unitPriceHintEl.textContent=`No Asset Master record found for ${name}.`;return;}const price=Number(m.unit_price_jpy);if(force||!unitPriceJpyEl.value){unitPriceJpyEl.value=price.toFixed(2);calculateValue();}unitPriceHintEl.textContent=`Default Unit Price for ${name}: ${price.toFixed(2)} (from Asset Master, editable)`;}
+  function hasDuplicateMonthAsset(d,n,exclude=null){const m=getMonth(d);return assetRows.some(r=>(exclude===null||r.id!==exclude)&&getMonth(r.record_date)===m&&r.asset_name===n);}
+  function getMonthlySummary(rows){const map=new Map();rows.forEach(r=>{const m=getMonth(r.record_date);const v=Number(r.amount||0)*Number(r.unit_price_jpy||0);map.set(m,(map.get(m)||0)+v);});return[...map.entries()].map(([month,total])=>({month,total})).sort((a,b)=>b.month.localeCompare(a.month));}
 
-  function getMasterRowsForCategory(category) { return assetMasterRows.filter(r => r.is_active !== false && r.asset_category === category).sort((a,b) => Number(a.sort_order || 999) - Number(b.sort_order || 999)); }
-  function getMasterByName(name) { return assetMasterRows.find(r => r.asset_name === name); }
-  function getAssetSortOrder(name) { return Number(getMasterByName(name)?.sort_order || 999); }
-  function populateAssetNameOptions(category, selectedValue = '') { assetNameEl.innerHTML = '<option value="">Select asset name</option>'; getMasterRowsForCategory(category).forEach(row => { const opt = document.createElement('option'); opt.value = row.asset_name; opt.textContent = row.asset_name; assetNameEl.appendChild(opt); }); if (selectedValue && !getMasterByName(selectedValue)) { const opt = document.createElement('option'); opt.value = selectedValue; opt.textContent = selectedValue; assetNameEl.appendChild(opt); } assetNameEl.value = selectedValue || ''; }
-  function calculateValue() { calculatedValueEl.value = formatValueJpy(Number(amountEl.value || 0) * Number(unitPriceJpyEl.value || 0)); }
-  function applyDefaultUnitPrice(assetName, force = false) { if (!assetName) { unitPriceHintEl.textContent = 'Select Asset Name to prefill Unit Price.'; return; } const master = getMasterByName(assetName); if (!master) { unitPriceHintEl.textContent = `No Asset Master record found for ${assetName}.`; return; } const price = Number(master.unit_price_jpy); if (force || !unitPriceJpyEl.value) { unitPriceJpyEl.value = price.toFixed(2); calculateValue(); } unitPriceHintEl.textContent = `Default Unit Price for ${assetName}: ${price.toFixed(2)} (from Asset Master, editable)`; }
-  function hasDuplicateMonthAsset(recordDate, assetName, excludeId = null) { const m = getMonth(recordDate); return assetRows.some(r => (excludeId === null || r.id !== excludeId) && getMonth(r.record_date) === m && r.asset_name === assetName); }
+  function updateSummaryYearFilter(summary){const years=[...new Set(summary.map(i=>i.month.slice(0,4)))].sort((a,b)=>b.localeCompare(a));const prev=selectedSummaryYear;summaryYearFilterEl.innerHTML='<option value="">All Years</option>';years.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;summaryYearFilterEl.appendChild(o);});if(prev&&years.includes(prev))selectedSummaryYear=prev;else if(prev&&!years.includes(prev))selectedSummaryYear=years[0]||'';summaryYearFilterEl.value=selectedSummaryYear;}
+  function renderSummary(){monthSummaryBodyEl.innerHTML='';monthSummaryEmptyEl.textContent='';const summary=getMonthlySummary(assetRows);if(!summary.length){totalValueEl.textContent='¥ 0';return;}if(!summaryYearTouched&&!selectedSummaryYear)selectedSummaryYear=summary[0].month.slice(0,4);updateSummaryYearFilter(summary);if(!selectedSummaryYear){summaryPeriodHeaderEl.textContent='Year';summaryValueHeaderEl.textContent='Total Asset Value (Latest Month in Year)';const ym=new Map();summary.forEach(i=>{const y=i.month.slice(0,4);if(!ym.has(y)||i.month>ym.get(y).month)ym.set(y,{year:y,month:i.month,total:i.total});});const yearly=[...ym.values()].sort((a,b)=>b.year.localeCompare(a.year));summaryCaptionEl.textContent=`Showing yearly summary for the full period (${yearly.length} years).`;if(!selectedMonth||!yearly.some(x=>x.month===selectedMonth))selectedMonth=yearly[0].month;yearly.forEach(i=>appendSummaryRow(i.year,i.month,i.total));}else{summaryPeriodHeaderEl.textContent='Month';summaryValueHeaderEl.textContent='Total Asset Value (JPY)';const f=summary.filter(i=>i.month.startsWith(selectedSummaryYear+'-'));summaryCaptionEl.textContent=`Showing ${f.length} months for ${selectedSummaryYear}.`;if(!selectedMonth||!f.some(x=>x.month===selectedMonth))selectedMonth=f[0]?.month||'';f.forEach(i=>appendSummaryRow(i.month,i.month,i.total));}const s=summary.find(x=>x.month===selectedMonth);totalValueEl.textContent=`¥ ${formatValueJpy(s?s.total:0)}`;totalCaptionEl.textContent=selectedMonth?`Selected month: ${selectedMonth}`:'';}
+  function appendSummaryRow(label,target,total){const tr=document.createElement('tr');if(target===selectedMonth)tr.classList.add('selected-row');tr.innerHTML=`<td>${label}${label.length===4?`<div class="section-note">${target}</div>`:''}</td><td class="number">¥ ${formatValueJpy(total)}</td><td></td>`;const btn=document.createElement('button');btn.type='button';btn.className='small-button';btn.textContent='View Details';btn.onclick=()=>{selectedMonth=target;renderSummary();renderDetails();navigateToPage('records');};tr.lastElementChild.appendChild(btn);monthSummaryBodyEl.appendChild(tr);}
 
-  function getMonthlySummary(rows) { const map = new Map(); rows.forEach(r => { const m = getMonth(r.record_date); const v = Number(r.amount || 0) * Number(r.unit_price_jpy || 0); map.set(m, (map.get(m) || 0) + v); }); return [...map.entries()].map(([month,total]) => ({month,total})).sort((a,b) => b.month.localeCompare(a.month)); }
+  function renderDetails(){assetTableBodyEl.innerHTML='';emptyMessageEl.textContent='';detailCaptionEl.textContent=selectedMonth?`Showing details for ${selectedMonth}`:'';const rows=assetRows.filter(r=>getMonth(r.record_date)===selectedMonth).sort((a,b)=>{const co=categoryOrder.indexOf(a.asset_category)-categoryOrder.indexOf(b.asset_category);if(co)return co;return getAssetSortOrder(a.asset_name)-getAssetSortOrder(b.asset_name);});if(!rows.length){emptyMessageEl.textContent=selectedMonth?`No asset records found for ${selectedMonth}.`:'No asset records found.';return;}rows.forEach(row=>{const amount=Number(row.amount||0),price=Number(row.unit_price_jpy||0),value=amount*price;const tr=document.createElement('tr');tr.innerHTML=`<td>${getMonth(row.record_date)}</td><td>${row.asset_category||''}</td><td>${row.asset_name||''}</td><td class="number">${formatValueJpy(amount)}</td><td class="number">${formatUnitPrice(price)}</td><td class="number">${formatValueJpy(value)}</td><td class="nowrap">${formatDateTime(row.updated_at||row.created_at)}</td><td></td>`;const editBtn=document.createElement('button');editBtn.type='button';editBtn.className='small-button secondary-button';editBtn.textContent='Edit';editBtn.onclick=()=>setEditMode(row);const delBtn=document.createElement('button');delBtn.type='button';delBtn.className='small-button danger-button';delBtn.textContent='Delete';delBtn.onclick=()=>deleteAsset(row);const wrap=document.createElement('div');wrap.className='actions';wrap.append(editBtn,delBtn);tr.lastElementChild.appendChild(wrap);assetTableBodyEl.appendChild(tr);});}
 
-  function updateSummaryYearFilter(summary) { const years = [...new Set(summary.map(i => i.month.slice(0,4)))].sort((a,b) => b.localeCompare(a)); const prev = selectedSummaryYear; summaryYearFilterEl.innerHTML = '<option value="">All Years</option>'; years.forEach(y => { const opt = document.createElement('option'); opt.value = y; opt.textContent = y; summaryYearFilterEl.appendChild(opt); }); if (prev && years.includes(prev)) selectedSummaryYear = prev; else if (prev && !years.includes(prev)) selectedSummaryYear = years[0] || ''; summaryYearFilterEl.value = selectedSummaryYear; }
+  const totalLabelsPlugin={id:'totalLabelsPlugin',afterDatasetsDraw(chart){const{ctx,data,scales,chartArea}=chart;if(!data.labels.length||!scales.y)return;const last=data.labels.length-1;const points=new Set([0,Math.floor(last*.25),Math.floor(last*.5),Math.floor(last*.75),last]);ctx.save();ctx.font='bold 12px Arial';ctx.textAlign='center';ctx.textBaseline='bottom';data.labels.forEach((_,idx)=>{if(!points.has(idx))return;let total=0,yVal=0,x=null;data.datasets.forEach((ds,di)=>{const meta=chart.getDatasetMeta(di);if(meta.hidden)return;const el=meta.data[idx];if(el)x=el.x;const cur=Number(ds.data[idx]||0);total+=cur;yVal+=cur;});if(x!==null&&total>0){const y=Math.max(scales.y.getPixelForValue(yVal)-10,chartArea.top+16);const label=formatCompactJpy(total);const w=ctx.measureText(label).width+10,h=17,bx=x-w/2,by=y-h+2;ctx.save();ctx.fillStyle='rgba(255,255,255,.88)';ctx.strokeStyle='rgba(120,120,120,.35)';ctx.lineWidth=1;if(ctx.roundRect){ctx.beginPath();ctx.roundRect(bx,by,w,h,5);ctx.fill();ctx.stroke();}else{ctx.fillRect(bx,by,w,h);ctx.strokeRect(bx,by,w,h);}ctx.restore();ctx.fillStyle='#333';ctx.fillText(label,x,y);}});ctx.restore();}};
+  function getChartRows(){let rows=assetRows;const start=chartStartMonthEl.value,end=chartEndMonthEl.value,asset=chartAssetFilterEl.value,cat=chartCategoryFilterEl.value;rows=rows.filter(r=>{const m=getMonth(r.record_date);return(!start||m>=start)&&(!end||m<=end);});if(asset)rows=rows.filter(r=>r.asset_name===asset);else if(cat)rows=rows.filter(r=>r.asset_category===cat);return rows;}
+  function renderCategoryTrendChart(){chartEmptyMessageEl.textContent='';if(categoryTrendChart){categoryTrendChart.destroy();categoryTrendChart=null;}const rows=getChartRows();if(!rows.length){chartEmptyMessageEl.textContent='No category trend data found for the selected filters.';return;}const months=[...new Set(rows.map(r=>getMonth(r.record_date)))].sort((a,b)=>a.localeCompare(b));const asset=chartAssetFilterEl.value,cat=chartCategoryFilterEl.value;let datasets=[],isStacked=false;if(asset){const master=getMasterByName(asset);const color=categoryColors[master?.asset_category]||'#1f4e79';datasets=[{label:asset,data:months.map(m=>Math.floor(rows.filter(r=>getMonth(r.record_date)===m).reduce((s,r)=>s+Number(r.amount||0)*Number(r.unit_price_jpy||0),0))),backgroundColor:color}];chartSubtitleEl.textContent=`Shows monthly trend for ${asset} from ${months[0]} to ${months[months.length-1]}.`;}else if(cat){datasets=[{label:cat,data:months.map(m=>Math.floor(rows.filter(r=>getMonth(r.record_date)===m).reduce((s,r)=>s+Number(r.amount||0)*Number(r.unit_price_jpy||0),0))),backgroundColor:categoryColors[cat]||'#1f4e79'}];chartSubtitleEl.textContent=`Shows monthly totals for ${cat} from ${months[0]} to ${months[months.length-1]}.`;}else{isStacked=true;datasets=categoryOrder.map(c=>({label:c,data:months.map(m=>Math.floor(rows.filter(r=>getMonth(r.record_date)===m&&r.asset_category===c).reduce((s,r)=>s+Number(r.amount||0)*Number(r.unit_price_jpy||0),0))),backgroundColor:categoryColors[c]||'#999'}));chartSubtitleEl.textContent=`Shows monthly category totals from ${months[0]} to ${months[months.length-1]}.`;}
+    const ctx=document.getElementById('categoryTrendChart').getContext('2d');categoryTrendChart=new Chart(ctx,{type:'bar',data:{labels:months,datasets},plugins:[totalLabelsPlugin],options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:28,right:12,left:8,bottom:0}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ¥ ${formatValueJpy(c.raw)}`,footer:items=>{if(!items.length||asset||cat)return'';return`Total: ¥ ${formatValueJpy(items.reduce((s,i)=>s+Number(i.raw||0),0))}`;}}}},scales:{x:{stacked:isStacked},y:{stacked:isStacked,grace:'12%',beginAtZero:true,ticks:{callback:v=>formatYAxisJpy(v)}}}}});}
 
-  function renderSummary() {
-    monthSummaryBodyEl.innerHTML = ''; monthSummaryEmptyEl.textContent = ''; summaryCaptionEl.textContent = '';
-    const summary = getMonthlySummary(assetRows);
-    if (!summary.length) { totalValueEl.textContent = '¥ 0'; totalCaptionEl.textContent = ''; monthSummaryEmptyEl.textContent = 'No monthly summary data found.'; return; }
-    if (!summaryYearTouched && !selectedSummaryYear) selectedSummaryYear = summary[0].month.slice(0,4);
-    updateSummaryYearFilter(summary);
-    if (!selectedSummaryYear) {
-      summaryPeriodHeaderEl.textContent = 'Year'; summaryValueHeaderEl.textContent = 'Total Asset Value (Latest Month in Year)';
-      const yearMap = new Map(); summary.forEach(i => { const y = i.month.slice(0,4); if (!yearMap.has(y) || i.month > yearMap.get(y).month) yearMap.set(y, {year:y, month:i.month, total:i.total}); });
-      const yearly = [...yearMap.values()].sort((a,b) => b.year.localeCompare(a.year)); summaryCaptionEl.textContent = `Showing yearly summary for the full period (${yearly.length} years).`;
-      if (!selectedMonth || !yearly.some(x => x.month === selectedMonth)) selectedMonth = yearly[0].month;
-      yearly.forEach(i => appendSummaryRow(i.year, i.month, i.total));
-    } else {
-      summaryPeriodHeaderEl.textContent = 'Month'; summaryValueHeaderEl.textContent = 'Total Asset Value (JPY)';
-      const filtered = summary.filter(i => i.month.startsWith(selectedSummaryYear + '-')); summaryCaptionEl.textContent = `Showing ${filtered.length} months for ${selectedSummaryYear}.`;
-      if (!selectedMonth || !filtered.some(x => x.month === selectedMonth)) selectedMonth = filtered[0]?.month || '';
-      filtered.forEach(i => appendSummaryRow(i.month, i.month, i.total));
-    }
-    const selected = summary.find(x => x.month === selectedMonth); totalValueEl.textContent = `¥ ${formatValueJpy(selected ? selected.total : 0)}`; totalCaptionEl.textContent = selectedMonth ? `Selected month: ${selectedMonth}` : '';
-  }
-  function appendSummaryRow(periodLabel, targetMonth, total) { const tr = document.createElement('tr'); if (targetMonth === selectedMonth) tr.classList.add('selected-row'); tr.innerHTML = `<td>${periodLabel}${periodLabel.length === 4 ? `<div class="section-note">${targetMonth}</div>` : ''}</td><td class="number">¥ ${formatValueJpy(total)}</td><td></td>`; const btn = document.createElement('button'); btn.type='button'; btn.className='small-button'; btn.textContent='View Details'; btn.onclick = () => { selectedMonth = targetMonth; renderSummary(); renderDetails(); navigateToPage('records'); }; tr.lastElementChild.appendChild(btn); monthSummaryBodyEl.appendChild(tr); }
+  function resetForm(){editingId=null;formTitleEl.textContent='Add Asset Record';formModeBadgeEl.classList.add('hidden');formModeBadgeEl.textContent='';saveButtonEl.textContent='Save';recordDateEl.value=monthEndToday();assetCategoryEl.value='';populateAssetNameOptions('', '');amountEl.value='';unitPriceJpyEl.value='';calculatedValueEl.value='';unitPriceHintEl.textContent='Select Asset Name to prefill Unit Price.';formSuccessEl.textContent='';formErrorEl.textContent='';}
+  function setEditMode(row){editingId=row.id;formTitleEl.textContent='Edit Asset Record';formModeBadgeEl.classList.remove('hidden');formModeBadgeEl.textContent=`Editing ID: ${row.id}`;saveButtonEl.textContent='Update';recordDateEl.value=row.record_date||'';assetCategoryEl.value=row.asset_category||'';populateAssetNameOptions(row.asset_category||'',row.asset_name||'');amountEl.value=row.amount||'';unitPriceJpyEl.value=Number(row.unit_price_jpy||0).toFixed(2);applyDefaultUnitPrice(row.asset_name||'',false);calculateValue();navigateToPage('records');assetFormCardEl.scrollIntoView({behavior:'smooth',block:'start'});}
+  async function deleteAsset(row){if(!confirm(`Delete this record?\n\nAsset Name: ${row.asset_name}\nID: ${row.id}`))return;const{error}=await client.from('assets').delete().eq('id',row.id);if(error){tableErrorEl.textContent='Error deleting data: '+error.message;return;}await loadAssets();}
 
-  function renderDetails() { assetTableBodyEl.innerHTML = ''; emptyMessageEl.textContent = ''; detailCaptionEl.textContent = selectedMonth ? `Showing details for ${selectedMonth}` : ''; const rows = assetRows.filter(r => getMonth(r.record_date) === selectedMonth).sort((a,b) => { const co = categoryOrder.indexOf(a.asset_category) - categoryOrder.indexOf(b.asset_category); if (co) return co; return getAssetSortOrder(a.asset_name) - getAssetSortOrder(b.asset_name); }); if (!rows.length) { emptyMessageEl.textContent = selectedMonth ? `No asset records found for ${selectedMonth}.` : 'No asset records found.'; return; } rows.forEach(row => { const amount=Number(row.amount||0), price=Number(row.unit_price_jpy||0), value=amount*price; const tr=document.createElement('tr'); tr.innerHTML=`<td>${getMonth(row.record_date)}</td><td>${row.asset_category||''}</td><td>${row.asset_name||''}</td><td class="number">${formatValueJpy(amount)}</td><td class="number">${formatUnitPrice(price)}</td><td class="number">${formatValueJpy(value)}</td><td class="nowrap">${formatDateTime(row.updated_at||row.created_at)}</td><td></td>`; const editBtn=document.createElement('button'); editBtn.type='button'; editBtn.className='small-button secondary-button'; editBtn.textContent='Edit'; editBtn.onclick=()=>setEditMode(row); const delBtn=document.createElement('button'); delBtn.type='button'; delBtn.className='small-button danger-button'; delBtn.textContent='Delete'; delBtn.onclick=()=>deleteAsset(row); const wrap=document.createElement('div'); wrap.className='actions'; wrap.append(editBtn,delBtn); tr.lastElementChild.appendChild(wrap); assetTableBodyEl.appendChild(tr); }); }
+  function resetAssetMasterForm(){editingAssetMasterId=null;assetMasterFormTitleEl.textContent='Asset Master';assetMasterModeBadgeEl.classList.add('hidden');assetMasterModeBadgeEl.textContent='';masterSaveButtonEl.textContent='Save Asset Master';masterAssetCategoryEl.value='';masterAssetNameEl.value='';masterUnitPriceJpyEl.value='';masterSortOrderEl.value='';masterIsActiveEl.value='true';assetMasterSuccessEl.textContent='';assetMasterErrorEl.textContent='';}
+  function setAssetMasterEditMode(row){editingAssetMasterId=row.id;assetMasterFormTitleEl.textContent='Edit Asset Master';assetMasterModeBadgeEl.classList.remove('hidden');assetMasterModeBadgeEl.textContent=`Editing ID: ${row.id}`;masterSaveButtonEl.textContent='Update Asset Master';masterAssetCategoryEl.value=row.asset_category||'';masterAssetNameEl.value=row.asset_name||'';masterUnitPriceJpyEl.value=Number(row.unit_price_jpy||0).toFixed(2);masterSortOrderEl.value=row.sort_order||999;masterIsActiveEl.value=row.is_active===false?'false':'true';navigateToPage('asset-master');assetMasterCardEl.scrollIntoView({behavior:'smooth',block:'start'});}
+  function renderAssetMasterTable(){assetMasterTableBodyEl.innerHTML='';assetMasterEmptyEl.textContent='';if(!assetMasterRows.length){assetMasterEmptyEl.textContent='No asset master records found.';return;}[...assetMasterRows].sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999)).forEach(row=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${row.asset_category||''}</td><td>${row.asset_name||''}</td><td class="number">${formatUnitPrice(row.unit_price_jpy)}</td><td class="number">${row.sort_order||''}</td><td>${row.is_active===false?'Inactive':'Active'}</td><td class="nowrap">${formatDateTime(row.updated_at||row.created_at)}</td><td></td>`;const btn=document.createElement('button');btn.type='button';btn.className='small-button secondary-button';btn.textContent='Edit';btn.onclick=()=>setAssetMasterEditMode(row);tr.lastElementChild.appendChild(btn);assetMasterTableBodyEl.appendChild(tr);});}
+  async function renumberAssetMasterSortOrder(){assetMasterErrorEl.textContent='';assetMasterSuccessEl.textContent='';if(!assetMasterRows.length){assetMasterErrorEl.textContent='No Asset Master rows to renumber.';return;}if(!confirm('Renumber Sort Order based on current displayed order?\n\nThe new numbers will be 10, 20, 30...'))return;masterRenumberButtonEl.disabled=true;masterRenumberButtonEl.textContent='Renumbering...';try{const rows=[...assetMasterRows].sort((a,b)=>{const s=Number(a.sort_order||999)-Number(b.sort_order||999);if(s)return s;const c=(a.asset_category||'').localeCompare(b.asset_category||'');if(c)return c;return(a.asset_name||'').localeCompare(b.asset_name||'');});for(let i=0;i<rows.length;i++){const next=(i+1)*10;if(Number(rows[i].sort_order)!==next){const{error}=await client.from('asset_master').update({sort_order:next}).eq('id',rows[i].id);if(error)throw error;}}assetMasterSuccessEl.textContent='Sort Order renumbered successfully. Current order is now 10, 20, 30...';resetAssetMasterForm();await loadAssetMaster();}catch(e){assetMasterErrorEl.textContent='Error renumbering Sort Order: '+(e.message||JSON.stringify(e));}finally{masterRenumberButtonEl.disabled=false;masterRenumberButtonEl.textContent='Renumber Sort Order';}}
+  async function saveAssetMaster(event){event.preventDefault();assetMasterErrorEl.textContent='';assetMasterSuccessEl.textContent='';const payload={asset_category:masterAssetCategoryEl.value,asset_name:masterAssetNameEl.value.trim(),unit_price_jpy:Number(masterUnitPriceJpyEl.value),sort_order:Number(masterSortOrderEl.value),is_active:masterIsActiveEl.value==='true'};if(!payload.asset_category||!payload.asset_name){assetMasterErrorEl.textContent='Please fill in Category and Asset Name.';return;}if(Number.isNaN(payload.unit_price_jpy)||payload.unit_price_jpy<0){assetMasterErrorEl.textContent='Please enter a valid Unit Price.';return;}if(Number.isNaN(payload.sort_order)||payload.sort_order<1){assetMasterErrorEl.textContent='Please enter a valid Sort Order.';return;}masterSaveButtonEl.disabled=true;masterSaveButtonEl.textContent=editingAssetMasterId===null?'Saving...':'Updating...';try{if(editingAssetMasterId===null){const{error}=await client.from('asset_master').insert([payload]);if(error)throw error;assetMasterSuccessEl.textContent='Asset Master saved successfully.';}else{const{error}=await client.from('asset_master').update(payload).eq('id',editingAssetMasterId);if(error)throw error;assetMasterSuccessEl.textContent='Asset Master updated successfully.';}resetAssetMasterForm();await loadAssetMaster();}catch(e){assetMasterErrorEl.textContent='Error saving Asset Master: '+(e.message||JSON.stringify(e));}finally{masterSaveButtonEl.disabled=false;masterSaveButtonEl.textContent=editingAssetMasterId===null?'Save Asset Master':'Update Asset Master';}}
 
-  const totalLabelsPlugin = { id:'totalLabelsPlugin', afterDatasetsDraw(chart) { const {ctx,data,scales,chartArea}=chart; if (!data.labels.length || !scales.y) return; const last=data.labels.length-1; const points=new Set([0,Math.floor(last*.25),Math.floor(last*.5),Math.floor(last*.75),last]); ctx.save(); ctx.font='bold 12px Arial'; ctx.textAlign='center'; ctx.textBaseline='bottom'; data.labels.forEach((_,idx)=>{ if(!points.has(idx)) return; let total=0,yVal=0,x=null; data.datasets.forEach((ds,di)=>{ const meta=chart.getDatasetMeta(di); if(meta.hidden)return; const el=meta.data[idx]; if(el)x=el.x; const cur=Number(ds.data[idx]||0); total+=cur; yVal+=cur; }); if(x!==null&&total>0){ const y=Math.max(scales.y.getPixelForValue(yVal)-10, chartArea.top+16); const label=formatCompactJpy(total); const w=ctx.measureText(label).width+10; const h=17; const bx=x-w/2, by=y-h+2; ctx.save(); ctx.fillStyle='rgba(255,255,255,.88)'; ctx.strokeStyle='rgba(120,120,120,.35)'; ctx.lineWidth=1; if(ctx.roundRect){ctx.beginPath();ctx.roundRect(bx,by,w,h,5);ctx.fill();ctx.stroke();}else{ctx.fillRect(bx,by,w,h);ctx.strokeRect(bx,by,w,h);} ctx.restore(); ctx.fillStyle='#333'; ctx.fillText(label,x,y); } }); ctx.restore(); } };
+  async function loadAssetMaster(){assetMasterStatusEl.textContent='Loading Asset Master...';const{data,error}=await client.from('asset_master').select('id, asset_category, asset_name, unit_price_jpy, sort_order, is_active, updated_at, created_at').order('sort_order',{ascending:true});if(error){assetMasterRows=[];assetMasterStatusEl.textContent='Asset Master load failed: '+error.message;throw error;}assetMasterRows=data||[];assetMasterStatusEl.textContent=`Asset Master loaded: ${assetMasterRows.filter(r=>r.is_active!==false).length} active assets.`;populateCategorySelects();populateChartAssetFilter();if(assetCategoryEl.value)populateAssetNameOptions(assetCategoryEl.value,assetNameEl.value);renderAssetMasterTable();}
+  async function loadAssets(){try{tableErrorEl.textContent='';totalValueEl.textContent='Loading...';totalCaptionEl.textContent='Loading asset data...';monthSummaryBodyEl.innerHTML='';assetTableBodyEl.innerHTML='';chartEmptyMessageEl.textContent='';const pageSize=1000;let from=0,all=[];while(true){const res=await client.from('assets').select('*').order('record_date',{ascending:false}).order('id',{ascending:false}).range(from,from+pageSize-1);if(res.error)throw res.error;const page=res.data||[];all=all.concat(page);if(page.length<pageSize)break;from+=pageSize;}assetRows=all.map(r=>({id:r.id,record_date:r.record_date,asset_category:r.asset_category,asset_name:r.asset_name,amount:r.amount,unit_price_jpy:r.unit_price_jpy,updated_at:r.updated_at,created_at:r.created_at}));populateMonthFilters();renderSummary();renderDetails();renderCategoryTrendChart();}catch(e){totalValueEl.textContent='-';totalCaptionEl.textContent='Load failed';tableErrorEl.textContent='Error loading data: '+(e.message||JSON.stringify(e));chartEmptyMessageEl.textContent='Chart could not be loaded.';}}
+  async function initializeAppData(){await loadAssetMaster();await loadAssets();}
+  async function saveRecord(event){event.preventDefault();formErrorEl.textContent='';formSuccessEl.textContent='';const payload={record_date:recordDateEl.value,asset_category:assetCategoryEl.value,asset_name:assetNameEl.value,amount:Number(amountEl.value),unit_price_jpy:Number(unitPriceJpyEl.value)};if(!payload.record_date||!payload.asset_category||!payload.asset_name){formErrorEl.textContent='Please fill in Record Date, Category, and Asset Name.';return;}if(Number.isNaN(payload.amount)||Number.isNaN(payload.unit_price_jpy)){formErrorEl.textContent='Please enter valid numeric values.';return;}if(hasDuplicateMonthAsset(payload.record_date,payload.asset_name,editingId)){formErrorEl.textContent='A record for the same month and same Asset Name already exists.';return;}saveButtonEl.disabled=true;saveButtonEl.textContent=editingId===null?'Saving...':'Updating...';try{if(editingId===null){const{error}=await client.from('assets').insert([payload]);if(error)throw error;formSuccessEl.textContent='Saved successfully.';}else{const{error}=await client.from('assets').update(payload).eq('id',editingId);if(error)throw error;formSuccessEl.textContent='Updated successfully.';}selectedMonth=getMonth(payload.record_date);resetForm();await loadAssets();navigateToPage('records');}catch(e){formErrorEl.textContent='Error saving data: '+(e.message||JSON.stringify(e));}finally{saveButtonEl.disabled=false;saveButtonEl.textContent=editingId===null?'Save':'Update';}}
 
-  function renderCategoryTrendChart() { chartEmptyMessageEl.textContent=''; if(categoryTrendChart){categoryTrendChart.destroy(); categoryTrendChart=null;} if(!assetRows.length){chartEmptyMessageEl.textContent='No category trend data found.';return;} const monthMap=new Map(); assetRows.forEach(r=>{const m=getMonth(r.record_date), c=r.asset_category||'Other', v=Number(r.amount||0)*Number(r.unit_price_jpy||0); if(!monthMap.has(m)) monthMap.set(m,{}); const obj=monthMap.get(m); obj[c]=(obj[c]||0)+v;}); const labels=[...monthMap.keys()].sort((a,b)=>a.localeCompare(b)); const selected=chartCategoryFilterEl.value; const datasets= selected ? [{label:selected,data:labels.map(m=>Math.floor((monthMap.get(m)||{})[selected]||0)),backgroundColor:categoryColors[selected]||'#1f4e79'}] : categoryOrder.map(c=>({label:c,data:labels.map(m=>Math.floor((monthMap.get(m)||{})[c]||0)),backgroundColor:categoryColors[c]||'#999'})); const isStacked=!selected; chartSubtitleEl.textContent=selected?`Shows the monthly trend for ${selected}. Value labels are displayed at 0%, 25%, 50%, 75%, and 100% points.`:'Shows monthly category totals as a stacked bar chart. Total labels are displayed at 0%, 25%, 50%, 75%, and 100% points.'; const ctx=document.getElementById('categoryTrendChart').getContext('2d'); categoryTrendChart=new Chart(ctx,{type:'bar',data:{labels,datasets},plugins:[totalLabelsPlugin],options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:28,right:12,left:8,bottom:0}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ¥ ${formatValueJpy(ctx.raw)}`,footer:(items)=>{if(!items.length||selected)return'';return `Total: ¥ ${formatValueJpy(items.reduce((s,i)=>s+Number(i.raw||0),0))}`;}}}},scales:{x:{stacked:isStacked},y:{stacked:isStacked,grace:'12%',beginAtZero:true,ticks:{callback:v=>formatYAxisJpy(v)}}}}}); }
+  function updateAuthUI(){if(currentUser){loggedOutAreaEl.classList.add('hidden');loggedInAreaEl.classList.remove('hidden');appAreaEl.classList.remove('hidden');currentUserEmailEl.textContent=currentUser.email||'';showPage(getPageFromHash());}else{loggedOutAreaEl.classList.remove('hidden');loggedInAreaEl.classList.add('hidden');appAreaEl.classList.add('hidden');currentUserEmailEl.textContent='';}}
+  async function sendMagicLink(){authSuccessEl.textContent='';authErrorEl.textContent='';const email=emailInputEl.value.trim();if(!email){authErrorEl.textContent='Please enter your email address.';return;}sendMagicLinkButtonEl.disabled=true;sendMagicLinkButtonEl.textContent='Sending...';const{error}=await client.auth.signInWithOtp({email,options:{emailRedirectTo:'https://tokkee78.github.io/asset-manager/'}});if(error)authErrorEl.textContent='Error sending Magic Link: '+error.message;else authSuccessEl.textContent='Magic Link sent. Please check your email.';sendMagicLinkButtonEl.disabled=false;sendMagicLinkButtonEl.textContent='Send Magic Link';}
+  async function logout(){const{error}=await client.auth.signOut();if(error){authErrorEl.textContent='Error logging out: '+error.message;return;}currentUser=null;updateAuthUI();}
+  async function initializeAuth(){const{data,error}=await client.auth.getSession();if(error)console.error(error);currentUser=data?.session?.user??null;updateAuthUI();if(currentUser)initializeAppData();}
+  client.auth.onAuthStateChange((_e,session)=>{currentUser=session?.user??null;updateAuthUI();if(currentUser){initializeAppData();}else{assetRows=[];assetMasterRows=[];selectedMonth='';selectedSummaryYear='';summaryYearTouched=false;totalValueEl.textContent='¥ 0';totalCaptionEl.textContent='';monthSummaryBodyEl.innerHTML='';assetTableBodyEl.innerHTML='';assetMasterTableBodyEl.innerHTML='';assetMasterStatusEl.textContent='Asset Master will be loaded after sign-in.';if(categoryTrendChart){categoryTrendChart.destroy();categoryTrendChart=null;}resetForm();resetAssetMasterForm();}});
 
-  function resetForm() { editingId=null; formTitleEl.textContent='Add Asset Record'; formModeBadgeEl.classList.add('hidden'); formModeBadgeEl.textContent=''; saveButtonEl.textContent='Save'; recordDateEl.value=monthEndToday(); assetCategoryEl.value=''; populateAssetNameOptions('', ''); amountEl.value=''; unitPriceJpyEl.value=''; calculatedValueEl.value=''; unitPriceHintEl.textContent='Select Asset Name to prefill Unit Price.'; formSuccessEl.textContent=''; formErrorEl.textContent=''; }
-  function setEditMode(row) { editingId=row.id; formTitleEl.textContent='Edit Asset Record'; formModeBadgeEl.classList.remove('hidden'); formModeBadgeEl.textContent=`Editing ID: ${row.id}`; saveButtonEl.textContent='Update'; recordDateEl.value=row.record_date||''; assetCategoryEl.value=row.asset_category||''; populateAssetNameOptions(row.asset_category||'', row.asset_name||''); amountEl.value=row.amount||''; unitPriceJpyEl.value=Number(row.unit_price_jpy||0).toFixed(2); applyDefaultUnitPrice(row.asset_name||'', false); calculateValue(); navigateToPage('records'); assetFormCardEl.scrollIntoView({behavior:'smooth',block:'start'}); }
-  async function deleteAsset(row) { if(!confirm(`Delete this record?\n\nAsset Name: ${row.asset_name}\nID: ${row.id}`)) return; const {error}=await client.from('assets').delete().eq('id',row.id); if(error){tableErrorEl.textContent='Error deleting data: '+error.message;return;} await loadAssets(); }
+  amountEl.addEventListener('input',calculateValue);unitPriceJpyEl.addEventListener('input',calculateValue);assetCategoryEl.addEventListener('change',()=>{populateAssetNameOptions(assetCategoryEl.value,'');unitPriceJpyEl.value='';calculatedValueEl.value='';unitPriceHintEl.textContent='Select Asset Name to prefill Unit Price.';});assetNameEl.addEventListener('change',()=>applyDefaultUnitPrice(assetNameEl.value,true));
+  chartCategoryFilterEl.addEventListener('change',()=>{populateChartAssetFilter();renderCategoryTrendChart();});chartAssetFilterEl.addEventListener('change',renderCategoryTrendChart);chartPeriodPresetEl.addEventListener('change',()=>applyPeriodPreset(true));chartStartMonthEl.addEventListener('change',()=>{chartPeriodPresetEl.value='custom';renderCategoryTrendChart();});chartEndMonthEl.addEventListener('change',()=>{chartPeriodPresetEl.value='custom';renderCategoryTrendChart();});
+  summaryYearFilterEl.addEventListener('change',()=>{summaryYearTouched=true;selectedSummaryYear=summaryYearFilterEl.value;renderSummary();renderDetails();});clearButtonEl.addEventListener('click',resetForm);assetFormEl.addEventListener('submit',saveRecord);masterClearButtonEl.addEventListener('click',resetAssetMasterForm);masterRenumberButtonEl.addEventListener('click',renumberAssetMasterSortOrder);assetMasterFormEl.addEventListener('submit',saveAssetMaster);sendMagicLinkButtonEl.addEventListener('click',sendMagicLink);logoutButtonEl.addEventListener('click',logout);
 
-  function resetAssetMasterForm() { editingAssetMasterId=null; assetMasterFormTitleEl.textContent='Asset Master'; assetMasterModeBadgeEl.classList.add('hidden'); assetMasterModeBadgeEl.textContent=''; masterSaveButtonEl.textContent='Save Asset Master'; masterAssetCategoryEl.value=''; masterAssetNameEl.value=''; masterUnitPriceJpyEl.value=''; masterSortOrderEl.value=''; masterIsActiveEl.value='true'; assetMasterSuccessEl.textContent=''; assetMasterErrorEl.textContent=''; }
-  function setAssetMasterEditMode(row) { editingAssetMasterId=row.id; assetMasterFormTitleEl.textContent='Edit Asset Master'; assetMasterModeBadgeEl.classList.remove('hidden'); assetMasterModeBadgeEl.textContent=`Editing ID: ${row.id}`; masterSaveButtonEl.textContent='Update Asset Master'; masterAssetCategoryEl.value=row.asset_category||''; masterAssetNameEl.value=row.asset_name||''; masterUnitPriceJpyEl.value=Number(row.unit_price_jpy||0).toFixed(2); masterSortOrderEl.value=row.sort_order||999; masterIsActiveEl.value=row.is_active===false?'false':'true'; navigateToPage('asset-master'); assetMasterCardEl.scrollIntoView({behavior:'smooth',block:'start'}); }
-  function renderAssetMasterTable() { assetMasterTableBodyEl.innerHTML=''; assetMasterEmptyEl.textContent=''; if(!assetMasterRows.length){assetMasterEmptyEl.textContent='No asset master records found.';return;} [...assetMasterRows].sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999)).forEach(row=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.asset_category||''}</td><td>${row.asset_name||''}</td><td class="number">${formatUnitPrice(row.unit_price_jpy)}</td><td class="number">${row.sort_order||''}</td><td>${row.is_active===false?'Inactive':'Active'}</td><td class="nowrap">${formatDateTime(row.updated_at||row.created_at)}</td><td></td>`; const btn=document.createElement('button'); btn.type='button'; btn.className='small-button secondary-button'; btn.textContent='Edit'; btn.onclick=()=>setAssetMasterEditMode(row); tr.lastElementChild.appendChild(btn); assetMasterTableBodyEl.appendChild(tr); }); }
-
-  async function renumberAssetMasterSortOrder() { assetMasterErrorEl.textContent=''; assetMasterSuccessEl.textContent=''; if(!assetMasterRows.length){assetMasterErrorEl.textContent='No Asset Master rows to renumber.'; return;} const ok=confirm('Renumber Sort Order based on the current displayed order?\n\nThe new numbers will be 10, 20, 30... so that future assets can be inserted between existing rows.'); if(!ok) return; masterRenumberButtonEl.disabled=true; masterRenumberButtonEl.textContent='Renumbering...'; try{ const rows=[...assetMasterRows].sort((a,b)=>{ const sortDiff=Number(a.sort_order||999)-Number(b.sort_order||999); if(sortDiff!==0) return sortDiff; const catDiff=(a.asset_category||'').localeCompare(b.asset_category||''); if(catDiff!==0) return catDiff; return (a.asset_name||'').localeCompare(b.asset_name||''); }); for(let i=0;i<rows.length;i++){ const newSortOrder=(i+1)*10; if(Number(rows[i].sort_order)!==newSortOrder){ const {error}=await client.from('asset_master').update({sort_order:newSortOrder}).eq('id',rows[i].id); if(error) throw error; } } assetMasterSuccessEl.textContent='Sort Order renumbered successfully. Current order is now 10, 20, 30...'; resetAssetMasterForm(); await loadAssetMaster(); }catch(e){ console.error(e); assetMasterErrorEl.textContent='Error renumbering Sort Order: '+(e.message||JSON.stringify(e)); }finally{ masterRenumberButtonEl.disabled=false; masterRenumberButtonEl.textContent='Renumber Sort Order'; } }
-
-  async function saveAssetMaster(event) { event.preventDefault(); assetMasterErrorEl.textContent=''; assetMasterSuccessEl.textContent=''; const payload={asset_category:masterAssetCategoryEl.value,asset_name:masterAssetNameEl.value.trim(),unit_price_jpy:Number(masterUnitPriceJpyEl.value),sort_order:Number(masterSortOrderEl.value),is_active:masterIsActiveEl.value==='true'}; if(!payload.asset_category||!payload.asset_name){assetMasterErrorEl.textContent='Please fill in Category and Asset Name.';return;} if(Number.isNaN(payload.unit_price_jpy)||payload.unit_price_jpy<0){assetMasterErrorEl.textContent='Please enter a valid Unit Price.';return;} if(Number.isNaN(payload.sort_order)||payload.sort_order<1){assetMasterErrorEl.textContent='Please enter a valid Sort Order.';return;} masterSaveButtonEl.disabled=true; masterSaveButtonEl.textContent=editingAssetMasterId===null?'Saving...':'Updating...'; try{ if(editingAssetMasterId===null){const {error}=await client.from('asset_master').insert([payload]); if(error)throw error; assetMasterSuccessEl.textContent='Asset Master saved successfully.';}else{const {error}=await client.from('asset_master').update(payload).eq('id',editingAssetMasterId); if(error)throw error; assetMasterSuccessEl.textContent='Asset Master updated successfully.';} resetAssetMasterForm(); await loadAssetMaster(); }catch(e){assetMasterErrorEl.textContent='Error saving Asset Master: '+(e.message||JSON.stringify(e));}finally{masterSaveButtonEl.disabled=false; masterSaveButtonEl.textContent=editingAssetMasterId===null?'Save Asset Master':'Update Asset Master';} }
-
-  async function loadAssetMaster() { assetMasterStatusEl.textContent='Loading Asset Master...'; const {data,error}=await client.from('asset_master').select('id, asset_category, asset_name, unit_price_jpy, sort_order, is_active, updated_at, created_at').order('sort_order',{ascending:true}); if(error){assetMasterRows=[]; assetMasterStatusEl.textContent='Asset Master load failed: '+error.message; throw error;} assetMasterRows=data||[]; assetMasterStatusEl.textContent=`Asset Master loaded: ${assetMasterRows.filter(r=>r.is_active!==false).length} active assets.`; populateCategorySelects(); if(assetCategoryEl.value) populateAssetNameOptions(assetCategoryEl.value, assetNameEl.value); renderAssetMasterTable(); }
-  async function loadAssets() { try { tableErrorEl.textContent=''; totalValueEl.textContent='Loading...'; totalCaptionEl.textContent='Loading asset data...'; monthSummaryBodyEl.innerHTML=''; assetTableBodyEl.innerHTML=''; chartEmptyMessageEl.textContent=''; const pageSize=1000; let from=0; let allData=[]; while(true){ const result=await client.from('assets').select('*').order('record_date',{ascending:false}).order('id',{ascending:false}).range(from,from+pageSize-1); if(result.error) throw result.error; const page=result.data||[]; allData=allData.concat(page); if(page.length<pageSize) break; from += pageSize; } assetRows=allData.map(r=>({id:r.id,record_date:r.record_date,asset_category:r.asset_category,asset_name:r.asset_name,amount:r.amount,unit_price_jpy:r.unit_price_jpy,updated_at:r.updated_at,created_at:r.created_at})); renderSummary(); renderDetails(); renderCategoryTrendChart(); } catch(e) { totalValueEl.textContent='-'; totalCaptionEl.textContent='Load failed'; tableErrorEl.textContent='Error loading data: '+(e.message||JSON.stringify(e)); chartEmptyMessageEl.textContent='Chart could not be loaded.'; } }
-  async function initializeAppData(){ await loadAssetMaster(); await loadAssets(); }
-
-  async function saveRecord(event) { event.preventDefault(); formErrorEl.textContent=''; formSuccessEl.textContent=''; const payload={record_date:recordDateEl.value,asset_category:assetCategoryEl.value,asset_name:assetNameEl.value,amount:Number(amountEl.value),unit_price_jpy:Number(unitPriceJpyEl.value)}; if(!payload.record_date||!payload.asset_category||!payload.asset_name){formErrorEl.textContent='Please fill in Record Date, Category, and Asset Name.';return;} if(Number.isNaN(payload.amount)||Number.isNaN(payload.unit_price_jpy)){formErrorEl.textContent='Please enter valid numeric values.';return;} if(hasDuplicateMonthAsset(payload.record_date,payload.asset_name,editingId)){formErrorEl.textContent='A record for the same month and same Asset Name already exists.';return;} saveButtonEl.disabled=true; saveButtonEl.textContent=editingId===null?'Saving...':'Updating...'; try{ if(editingId===null){const {error}=await client.from('assets').insert([payload]); if(error)throw error; formSuccessEl.textContent='Saved successfully.';}else{const {error}=await client.from('assets').update(payload).eq('id',editingId); if(error)throw error; formSuccessEl.textContent='Updated successfully.';} selectedMonth=getMonth(payload.record_date); resetForm(); await loadAssets(); navigateToPage('records'); }catch(e){formErrorEl.textContent='Error saving data: '+(e.message||JSON.stringify(e));}finally{saveButtonEl.disabled=false; saveButtonEl.textContent=editingId===null?'Save':'Update';} }
-
-  function updateAuthUI() { if(currentUser){ loggedOutAreaEl.classList.add('hidden'); loggedInAreaEl.classList.remove('hidden'); appAreaEl.classList.remove('hidden'); currentUserEmailEl.textContent=currentUser.email||''; showPage(getPageFromHash()); } else { loggedOutAreaEl.classList.remove('hidden'); loggedInAreaEl.classList.add('hidden'); appAreaEl.classList.add('hidden'); currentUserEmailEl.textContent=''; } }
-  async function sendMagicLink(){ authSuccessEl.textContent=''; authErrorEl.textContent=''; const email=emailInputEl.value.trim(); if(!email){authErrorEl.textContent='Please enter your email address.';return;} sendMagicLinkButtonEl.disabled=true; sendMagicLinkButtonEl.textContent='Sending...'; const {error}=await client.auth.signInWithOtp({email,options:{emailRedirectTo:'https://tokkee78.github.io/asset-manager/'}}); if(error) authErrorEl.textContent='Error sending Magic Link: '+error.message; else authSuccessEl.textContent='Magic Link sent. Please check your email.'; sendMagicLinkButtonEl.disabled=false; sendMagicLinkButtonEl.textContent='Send Magic Link'; }
-  async function logout(){ const {error}=await client.auth.signOut(); if(error){authErrorEl.textContent='Error logging out: '+error.message;return;} currentUser=null; updateAuthUI(); }
-  async function initializeAuth(){ const {data,error}=await client.auth.getSession(); if(error) console.error(error); currentUser=data?.session?.user??null; updateAuthUI(); if(currentUser) initializeAppData(); }
-
-  client.auth.onAuthStateChange((_event, session) => { currentUser=session?.user??null; updateAuthUI(); if(currentUser){ initializeAppData(); } else { assetRows=[]; assetMasterRows=[]; selectedMonth=''; selectedSummaryYear=''; summaryYearTouched=false; totalValueEl.textContent='¥ 0'; totalCaptionEl.textContent=''; monthSummaryBodyEl.innerHTML=''; assetTableBodyEl.innerHTML=''; assetMasterTableBodyEl.innerHTML=''; assetMasterStatusEl.textContent='Asset Master will be loaded after sign-in.'; if(categoryTrendChart){categoryTrendChart.destroy(); categoryTrendChart=null;} resetForm(); resetAssetMasterForm(); } });
-
-  amountEl.addEventListener('input', calculateValue);
-  unitPriceJpyEl.addEventListener('input', calculateValue);
-  assetCategoryEl.addEventListener('change', () => { populateAssetNameOptions(assetCategoryEl.value, ''); unitPriceJpyEl.value=''; calculatedValueEl.value=''; unitPriceHintEl.textContent='Select Asset Name to prefill Unit Price.'; });
-  assetNameEl.addEventListener('change', () => applyDefaultUnitPrice(assetNameEl.value, true));
-  chartCategoryFilterEl.addEventListener('change', renderCategoryTrendChart);
-  summaryYearFilterEl.addEventListener('change', () => { summaryYearTouched=true; selectedSummaryYear=summaryYearFilterEl.value; renderSummary(); renderDetails(); });
-  clearButtonEl.addEventListener('click', resetForm);
-  assetFormEl.addEventListener('submit', saveRecord);
-  masterClearButtonEl.addEventListener('click', resetAssetMasterForm);
-  masterRenumberButtonEl.addEventListener('click', renumberAssetMasterSortOrder);
-  assetMasterFormEl.addEventListener('submit', saveAssetMaster);
-  sendMagicLinkButtonEl.addEventListener('click', sendMagicLink);
-  logoutButtonEl.addEventListener('click', logout);
-
-  populateCategorySelects();
-  resetForm();
-  resetAssetMasterForm();
-  initializeNavigation();
-  initializeAuth();
+  populateCategorySelects();resetForm();resetAssetMasterForm();initializeNavigation();initializeAuth();
 </script>
 </body>
 </html>
