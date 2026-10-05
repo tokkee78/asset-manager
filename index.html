@@ -61,7 +61,7 @@
 </head>
 <body>
   <div class="card">
-    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.0.4</span></h1>
+    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.0.5</span></h1>
   </div>
 
   <div class="card">
@@ -146,7 +146,29 @@
   function populateAssetNameOptions(c,selected=''){assetNameEl.innerHTML='<option value="">Select asset name</option>';getMasterRowsForCategory(c).forEach(r=>{const o=document.createElement('option');o.value=r.asset_name;o.textContent=r.asset_name;assetNameEl.appendChild(o);});if(selected&&!getMasterByName(selected)){const o=document.createElement('option');o.value=selected;o.textContent=selected;assetNameEl.appendChild(o);}assetNameEl.value=selected||'';}
   function getExistingMonths(){return[...new Set(assetRows.map(r=>getMonth(r.record_date)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
   function populateMonthFilters(){const months=getExistingMonths();const oldStart=chartStartMonthEl.value,oldEnd=chartEndMonthEl.value;chartStartMonthEl.innerHTML='';chartEndMonthEl.innerHTML='';months.forEach(m=>{const a=document.createElement('option');a.value=m;a.textContent=m;chartStartMonthEl.appendChild(a);const b=document.createElement('option');b.value=m;b.textContent=m;chartEndMonthEl.appendChild(b);});if(months.length){chartStartMonthEl.value=oldStart&&months.includes(oldStart)?oldStart:months[0];chartEndMonthEl.value=oldEnd&&months.includes(oldEnd)?oldEnd:months[months.length-1];}if(chartStartMonthEl.value>chartEndMonthEl.value){chartStartMonthEl.value=chartEndMonthEl.value;}}
-  function populateSetupMonthOptions(){const old=setupMonthSelectEl.value;const months=new Set(getExistingMonths());const now=currentMonth();months.add(now);months.add(addMonths(now,1));const sorted=[...months].sort((a,b)=>b.localeCompare(a));setupMonthSelectEl.innerHTML='';sorted.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;setupMonthSelectEl.appendChild(o);});setupMonthSelectEl.value=old&&sorted.includes(old)?old:now;updateMonthSetupState();}
+  function populateSetupMonthOptions(){
+    const old=setupMonthSelectEl.value;
+    const existingMonths=getExistingMonths();
+    const now=currentMonth();
+    const firstMonth=existingMonths.length?existingMonths[0]:now;
+    const lastMonth=addMonths(now,12);
+    const months=[];
+    let cursor=firstMonth;
+    while(cursor<=lastMonth){
+      months.push(cursor);
+      cursor=addMonths(cursor,1);
+    }
+    months.sort((a,b)=>b.localeCompare(a));
+    setupMonthSelectEl.innerHTML='';
+    months.forEach(m=>{
+      const o=document.createElement('option');
+      o.value=m;
+      o.textContent=m;
+      setupMonthSelectEl.appendChild(o);
+    });
+    setupMonthSelectEl.value=old&&months.includes(old)?old:now;
+    updateMonthSetupState();
+  }
   function populateDetailMonthOptions(){const old=detailMonthSelectEl.value||selectedMonth;const months=getExistingMonths().sort((a,b)=>b.localeCompare(a));detailMonthSelectEl.innerHTML='';months.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;detailMonthSelectEl.appendChild(o);});if(months.length){detailMonthSelectEl.value=old&&months.includes(old)?old:(selectedMonth&&months.includes(selectedMonth)?selectedMonth:months[0]);selectedMonth=detailMonthSelectEl.value;}}
   function calculateValue(){calculatedValueEl.value=formatValueJpy(Number(amountEl.value||0)*Number(unitPriceJpyEl.value||0));}
   function applyDefaultUnitPrice(name,force=false){if(!name){unitPriceHintEl.textContent='Select Asset Name to prefill Unit Price.';return;}const m=getMasterByName(name);if(!m){unitPriceHintEl.textContent=`No Asset Master record found for ${name}.`;return;}const price=Number(m.unit_price_jpy);if(force||!unitPriceJpyEl.value){unitPriceJpyEl.value=price.toFixed(2);calculateValue();}unitPriceHintEl.textContent=`Default Unit Price for ${name}: ${price.toFixed(2)} (from Asset Master, editable)`;}
