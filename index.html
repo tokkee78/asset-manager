@@ -61,7 +61,7 @@
 </head>
 <body>
   <div class="card">
-    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.2.0</span></h1>
+    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.2.1</span></h1>
   </div>
 
   <div class="card">
@@ -151,7 +151,7 @@
           <div class="hint-box" style="min-width:180px;"><div class="section-note">Current Securities</div><div id="stockSummaryCurrentCount" class="summary-value">0</div></div>
         </div>
         <div class="section-note" style="margin-bottom:10px;">Security-level totals are aggregated across accounts. Average Cost and Remaining Cost Basis are shown only in the account-level details.</div>
-        <div class="table-wrap"><table><thead><tr><th>Security</th><th>Code</th><th>Total Purchase Amount</th><th>Total Sale Amount</th><th>Total Dividend</th><th>Current Quantity</th><th>Details</th></tr></thead><tbody id="stockSummaryTableBody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Security</th><th>Code</th><th>Account</th><th>Account Type</th><th>Purchased Qty</th><th>Purchase Amount</th><th>Sold Qty</th><th>Sale Amount</th><th>Current Qty</th><th>Average Cost</th><th>Remaining Cost Basis</th><th>Dividend</th></tr></thead><tbody id="stockSummaryTableBody"></tbody></table></div>
         <div id="stockSummaryEmpty" class="empty-message"></div><div id="stockSummaryError" class="error"></div>
       </div>
     </div>
@@ -319,23 +319,37 @@
   function renderStockSummary(){
     stockSummaryErrorEl.textContent='';stockSummaryTableBodyEl.innerHTML='';stockSummaryEmptyEl.textContent='';
     const all=buildStockSummaryData();
-    stockSummaryPurchaseEl.textContent=`¥ ${formatValueJpy(all.reduce((s,x)=>s+x.purchaseAmount,0))}`;
-    stockSummarySaleEl.textContent=`¥ ${formatValueJpy(all.reduce((s,x)=>s+x.saleAmount,0))}`;
-    stockSummaryDividendEl.textContent=`¥ ${formatValueJpy(all.reduce((s,x)=>s+x.dividend,0))}`;
-    stockSummaryCurrentCountEl.textContent=all.filter(x=>x.currentQty>0).length.toLocaleString();
+    stockSummaryPurchaseEl.textContent=`¥ ${formatValueJpy(all.reduce((sum,item)=>sum+item.purchaseAmount,0))}`;
+    stockSummarySaleEl.textContent=`¥ ${formatValueJpy(all.reduce((sum,item)=>sum+item.saleAmount,0))}`;
+    stockSummaryDividendEl.textContent=`¥ ${formatValueJpy(all.reduce((sum,item)=>sum+item.dividend,0))}`;
+    stockSummaryCurrentCountEl.textContent=all.filter(item=>item.currentQty>0).length.toLocaleString();
     const status=stockHoldingFilterEl.value;
-    const rows=all.filter(x=>status==='all'||(status==='current'&&x.currentQty>0)||(status==='sold'&&x.currentQty<=0));
+    const rows=all.filter(item=>status==='all'||(status==='current'&&item.currentQty>0)||(status==='sold'&&item.currentQty<=0));
     if(!rows.length){stockSummaryEmptyEl.textContent='No securities found for the selected holding status.';return;}
     rows.forEach(item=>{
+      const purchasedQty=item.accounts.reduce((sum,a)=>sum+Number(a.buyQty||0),0);
+      const soldQty=item.accounts.reduce((sum,a)=>sum+Number(a.soldQty||0),0);
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${item.securityName}</td><td>${item.securityCode||''}</td><td class="number">¥ ${formatValueJpy(item.purchaseAmount)}</td><td class="number">¥ ${formatValueJpy(item.saleAmount)}</td><td class="number">¥ ${formatValueJpy(item.dividend)}</td><td class="number">${Number(item.currentQty||0).toLocaleString()}</td><td></td>`;
-      const btn=document.createElement('button');btn.type='button';btn.className='small-button secondary-button';btn.textContent='Details';
-      const detailTr=document.createElement('tr');detailTr.className='hidden';const detailTd=document.createElement('td');detailTd.colSpan=7;
-      const inner=document.createElement('div');inner.style.padding='8px 0';
-      inner.innerHTML=`<div style="font-weight:bold;margin-bottom:8px;">${item.securityName}${item.securityCode?` (${item.securityCode})`:''} - Account Details</div><div class="table-wrap"><table><thead><tr><th>Account</th><th>Account Type</th><th>Purchased Qty</th><th>Purchase Amount</th><th>Sold Qty</th><th>Sale Amount</th><th>Current Qty</th><th>Average Cost</th><th>Remaining Cost Basis</th><th>Dividend</th></tr></thead><tbody>${item.accounts.map(a=>`<tr><td>${a.accountName}</td><td>${a.accountType}</td><td class="number">${Number(a.buyQty||0).toLocaleString()}</td><td class="number">¥ ${formatValueJpy(a.buyAmount)}</td><td class="number">${Number(a.soldQty||0).toLocaleString()}</td><td class="number">¥ ${formatValueJpy(a.saleAmount)}</td><td class="number">${Number(a.currentQty||0).toLocaleString()}</td><td class="number">${a.currentQty>0?'¥ '+formatValueJpy(a.averageCost):'-'}</td><td class="number">${a.currentQty>0?'¥ '+formatValueJpy(a.remainingCostBasis):'-'}</td><td class="number">¥ ${formatValueJpy(a.dividend)}</td></tr>`).join('')}</tbody></table></div>`;
-      detailTd.appendChild(inner);detailTr.appendChild(detailTd);
-      btn.addEventListener('click',()=>{const hidden=detailTr.classList.toggle('hidden');btn.textContent=hidden?'Details':'Close';});
-      tr.lastElementChild.appendChild(btn);stockSummaryTableBodyEl.append(tr,detailTr);
+      tr.style.fontWeight='bold';
+      tr.innerHTML=`<td></td><td>${item.securityCode||''}</td><td>-</td><td>-</td><td class="number">${purchasedQty.toLocaleString()}</td><td class="number">¥ ${formatValueJpy(item.purchaseAmount)}</td><td class="number">${soldQty.toLocaleString()}</td><td class="number">¥ ${formatValueJpy(item.saleAmount)}</td><td class="number">${Number(item.currentQty||0).toLocaleString()}</td><td class="number">-</td><td class="number">-</td><td class="number">¥ ${formatValueJpy(item.dividend)}</td>`;
+      const securityTd=tr.firstElementChild;
+      const toggleBtn=document.createElement('button');
+      toggleBtn.type='button';toggleBtn.className='small-button secondary-button';toggleBtn.textContent='▶';toggleBtn.style.marginRight='8px';toggleBtn.setAttribute('aria-label',`Show account details for ${item.securityName}`);
+      const nameSpan=document.createElement('span');nameSpan.textContent=item.securityName;
+      securityTd.append(toggleBtn,nameSpan);
+      const detailRows=[];
+      item.accounts.forEach(a=>{
+        const detailTr=document.createElement('tr');detailTr.className='hidden';detailTr.style.background='#fafafa';
+        detailTr.innerHTML=`<td style="padding-left:34px;">↳ ${item.securityName}</td><td>${item.securityCode||''}</td><td>${a.accountName}</td><td>${a.accountType}</td><td class="number">${Number(a.buyQty||0).toLocaleString()}</td><td class="number">¥ ${formatValueJpy(a.buyAmount)}</td><td class="number">${Number(a.soldQty||0).toLocaleString()}</td><td class="number">¥ ${formatValueJpy(a.saleAmount)}</td><td class="number">${Number(a.currentQty||0).toLocaleString()}</td><td class="number">${a.currentQty>0?'¥ '+formatValueJpy(a.averageCost):'-'}</td><td class="number">${a.currentQty>0?'¥ '+formatValueJpy(a.remainingCostBasis):'-'}</td><td class="number">¥ ${formatValueJpy(a.dividend)}</td>`;
+        detailRows.push(detailTr);
+      });
+      toggleBtn.addEventListener('click',()=>{
+        const opening=detailRows.some(row=>row.classList.contains('hidden'));
+        detailRows.forEach(row=>row.classList.toggle('hidden',!opening));
+        toggleBtn.textContent=opening?'▼':'▶';
+        toggleBtn.setAttribute('aria-label',`${opening?'Hide':'Show'} account details for ${item.securityName}`);
+      });
+      stockSummaryTableBodyEl.append(tr,...detailRows);
     });
   }
   function resetStockTransactionForm(){
