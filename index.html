@@ -69,7 +69,7 @@
 </head>
 <body>
   <div class="card">
-    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.3.0</span></h1>
+    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.3.1</span></h1>
   </div>
 
   <div class="card">
@@ -391,7 +391,7 @@
     });
   }
   function renderStockSummary(){
-    stockSummaryErrorEl.textContent='';stockSummaryTableBodyEl.innerHTML='';stockSummaryEmptyEl.textContent='';stockMasterTableBodyEl.innerHTML='';
+    stockSummaryErrorEl.textContent='';stockSummaryTableBodyEl.innerHTML='';stockSummaryEmptyEl.textContent='';
     const all=buildStockSummaryData().map(item=>({
       ...item,
       purchasedQty:item.accounts.reduce((sum,a)=>sum+Number(a.buyQty||0),0),
