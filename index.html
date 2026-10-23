@@ -61,7 +61,7 @@
 </head>
 <body>
   <div class="card">
-    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.1.0</span></h1>
+    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.2.0</span></h1>
   </div>
 
   <div class="card">
@@ -76,7 +76,7 @@
   </div>
 
   <div id="appArea" class="hidden">
-    <div class="card" id="navigationArea"><div class="nav-row"><button type="button" class="nav-button" data-page="dashboard">Dashboard</button><button type="button" class="nav-button" data-page="records">Records</button><button type="button" class="nav-button" data-page="asset-master">Asset Master</button><button type="button" class="nav-button" data-page="stock-transactions">Stock Transactions</button></div><div class="section-note" style="margin-top:10px;">URL hash controls the screen: <code>#dashboard</code>, <code>#records</code>, <code>#asset-master</code>, <code>#stock-transactions</code>.</div></div>
+    <div class="card" id="navigationArea"><div class="nav-row"><button type="button" class="nav-button" data-page="dashboard">Dashboard</button><button type="button" class="nav-button" data-page="records">Records</button><button type="button" class="nav-button" data-page="asset-master">Asset Master</button><button type="button" class="nav-button" data-page="stock-transactions">Stock Transactions</button><button type="button" class="nav-button" data-page="stock-summary">Stock Summary</button></div><div class="section-note" style="margin-top:10px;">URL hash controls the screen: <code>#dashboard</code>, <code>#records</code>, <code>#asset-master</code>, <code>#stock-transactions</code>, <code>#stock-summary</code>.</div></div>
 
     <div id="dashboardPage" class="page-section">
       <div class="card"><h2>Selected Month Total Asset Value</h2><div id="totalValue" class="summary-value">Loading...</div><div id="totalCaption" class="section-note"></div></div>
@@ -137,6 +137,24 @@
         <div id="stockTransactionEmpty" class="empty-message"></div><div id="stockTableError" class="error"></div>
       </div>
     </div>
+
+    <div id="stockSummaryPage" class="page-section hidden">
+      <div class="card">
+        <h2>Stock Summary</h2>
+        <div class="filter-row" style="margin-bottom:16px;">
+          <div class="section-control-chip"><label for="stockHoldingFilter">Holding Status</label><select id="stockHoldingFilter"><option value="current">Current Holdings</option><option value="sold">Sold Out</option><option value="all">All</option></select></div>
+        </div>
+        <div class="filter-row" style="margin-bottom:16px;">
+          <div class="hint-box" style="min-width:180px;"><div class="section-note">Total Purchase</div><div id="stockSummaryPurchase" class="summary-value">¥ 0</div></div>
+          <div class="hint-box" style="min-width:180px;"><div class="section-note">Total Sale</div><div id="stockSummarySale" class="summary-value">¥ 0</div></div>
+          <div class="hint-box" style="min-width:180px;"><div class="section-note">Total Dividend</div><div id="stockSummaryDividend" class="summary-value">¥ 0</div></div>
+          <div class="hint-box" style="min-width:180px;"><div class="section-note">Current Securities</div><div id="stockSummaryCurrentCount" class="summary-value">0</div></div>
+        </div>
+        <div class="section-note" style="margin-bottom:10px;">Security-level totals are aggregated across accounts. Average Cost and Remaining Cost Basis are shown only in the account-level details.</div>
+        <div class="table-wrap"><table><thead><tr><th>Security</th><th>Code</th><th>Total Purchase Amount</th><th>Total Sale Amount</th><th>Total Dividend</th><th>Current Quantity</th><th>Details</th></tr></thead><tbody id="stockSummaryTableBody"></tbody></table></div>
+        <div id="stockSummaryEmpty" class="empty-message"></div><div id="stockSummaryError" class="error"></div>
+      </div>
+    </div>
   </div>
 <script>
   const supabaseUrl = 'https://nowhqyugwptzjdwrknlc.supabase.co';
@@ -152,6 +170,7 @@
   const assetFormCardEl=$('assetFormCard'), assetFormEl=$('assetForm'), formTitleEl=$('formTitle'), formModeBadgeEl=$('formModeBadge'), recordDateEl=$('recordDate'), setupMonthSelectEl=$('setupMonthSelect'), monthSetupHintEl=$('monthSetupHint'), monthSetupButtonEl=$('monthSetupButton'), assetCategoryEl=$('assetCategory'), assetNameEl=$('assetName'), amountEl=$('amount'), unitPriceJpyEl=$('unitPriceJpy'), unitPriceHintEl=$('unitPriceHint'), assetMasterStatusEl=$('assetMasterStatus'), calculatedValueEl=$('calculatedValue'), saveButtonEl=$('saveButton'), clearButtonEl=$('clearButton'), formSuccessEl=$('formSuccess'), formErrorEl=$('formError');
   const assetMasterCardEl=$('assetMasterCard'), assetMasterFormEl=$('assetMasterForm'), assetMasterFormTitleEl=$('assetMasterFormTitle'), assetMasterModeBadgeEl=$('assetMasterModeBadge'), masterAssetCategoryEl=$('masterAssetCategory'), masterAssetNameEl=$('masterAssetName'), masterUnitPriceJpyEl=$('masterUnitPriceJpy'), masterSortOrderEl=$('masterSortOrder'), masterIsActiveEl=$('masterIsActive'), masterSaveButtonEl=$('masterSaveButton'), masterClearButtonEl=$('masterClearButton'), masterRenumberButtonEl=$('masterRenumberButton'), assetMasterSuccessEl=$('assetMasterSuccess'), assetMasterErrorEl=$('assetMasterError'), assetMasterTableBodyEl=$('assetMasterTableBody'), assetMasterEmptyEl=$('assetMasterEmpty');
   const stockTransactionsPageEl=$('stockTransactionsPage'), stockTransactionFormCardEl=$('stockTransactionFormCard'), stockTransactionFormEl=$('stockTransactionForm'), stockTransactionFormTitleEl=$('stockTransactionFormTitle'), stockTransactionModeBadgeEl=$('stockTransactionModeBadge'), stockTransactionDateEl=$('stockTransactionDate'), stockTransactionTypeEl=$('stockTransactionType'), stockSecurityNameEl=$('stockSecurityName'), stockSecurityCodeEl=$('stockSecurityCode'), stockQuantityEl=$('stockQuantity'), stockAmountJpyEl=$('stockAmountJpy'), stockAccountNameEl=$('stockAccountName'), stockAccountTypeEl=$('stockAccountType'), stockMemoEl=$('stockMemo'), stockSaveButtonEl=$('stockSaveButton'), stockClearButtonEl=$('stockClearButton'), stockFormSuccessEl=$('stockFormSuccess'), stockFormErrorEl=$('stockFormError'), stockSecurityFilterEl=$('stockSecurityFilter'), stockTypeFilterEl=$('stockTypeFilter'), stockStartDateEl=$('stockStartDate'), stockEndDateEl=$('stockEndDate'), stockTransactionCaptionEl=$('stockTransactionCaption'), stockTransactionTableBodyEl=$('stockTransactionTableBody'), stockTransactionEmptyEl=$('stockTransactionEmpty'), stockTableErrorEl=$('stockTableError');
+  const stockSummaryPageEl=$('stockSummaryPage'), stockHoldingFilterEl=$('stockHoldingFilter'), stockSummaryPurchaseEl=$('stockSummaryPurchase'), stockSummarySaleEl=$('stockSummarySale'), stockSummaryDividendEl=$('stockSummaryDividend'), stockSummaryCurrentCountEl=$('stockSummaryCurrentCount'), stockSummaryTableBodyEl=$('stockSummaryTableBody'), stockSummaryEmptyEl=$('stockSummaryEmpty'), stockSummaryErrorEl=$('stockSummaryError');
   let currentUser=null, assetRows=[], assetMasterRows=[], stockTransactionRows=[], selectedMonth='', selectedSummaryYear='', summaryYearTouched=false, editingId=null, editingAssetMasterId=null, editingStockTransactionId=null, categoryTrendChart=null;
 
   function formatValueJpy(v){return Math.floor(Number(v||0)).toLocaleString();}
@@ -164,8 +183,8 @@
   function addMonths(month, offset){const [y,m]=month.split('-').map(Number);const d=new Date(y,m-1+offset,1);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
   function formatDateTime(v){if(!v)return'-';const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v).slice(0,16).replace('T',' ');return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
   function monthEndToday(){return getMonthEndDate(currentMonth()+'-01');}
-  function getPageFromHash(){const h=window.location.hash.replace('#','');if(h==='records')return'records';if(h==='asset-master')return'asset-master';if(h==='stock-transactions')return'stock-transactions';return'dashboard';}
-  function showPage(p){const pages={dashboard:dashboardPageEl,records:recordsPageEl,'asset-master':assetMasterPageEl,'stock-transactions':stockTransactionsPageEl};Object.entries(pages).forEach(([n,e])=>e.classList.toggle('hidden',n!==p));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));}
+  function getPageFromHash(){const h=window.location.hash.replace('#','');if(h==='records')return'records';if(h==='asset-master')return'asset-master';if(h==='stock-transactions')return'stock-transactions';if(h==='stock-summary')return'stock-summary';return'dashboard';}
+  function showPage(p){const pages={dashboard:dashboardPageEl,records:recordsPageEl,'asset-master':assetMasterPageEl,'stock-transactions':stockTransactionsPageEl,'stock-summary':stockSummaryPageEl};Object.entries(pages).forEach(([n,e])=>e.classList.toggle('hidden',n!==p));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));}
   function navigateToPage(p){if(window.location.hash!=='#'+p)window.location.hash=p;showPage(p);}
   function initializeNavigation(){document.querySelectorAll('.nav-button').forEach(b=>b.addEventListener('click',()=>navigateToPage(b.dataset.page)));window.addEventListener('hashchange',()=>showPage(getPageFromHash()));showPage(getPageFromHash());}
   function activeMasterRows(){return assetMasterRows.filter(r=>r.is_active!==false).sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999));}
@@ -247,6 +266,78 @@
   function renderAssetMasterTable(){assetMasterTableBodyEl.innerHTML='';assetMasterEmptyEl.textContent='';if(!assetMasterRows.length){assetMasterEmptyEl.textContent='No asset master records found.';return;}[...assetMasterRows].sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999)).forEach(row=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${row.asset_category||''}</td><td>${row.asset_name||''}</td><td class="number">${formatUnitPrice(row.unit_price_jpy)}</td><td class="number">${row.sort_order||''}</td><td>${row.is_active===false?'Inactive':'Active'}</td><td class="nowrap">${formatDateTime(row.updated_at||row.created_at)}</td><td></td>`;const btn=document.createElement('button');btn.type='button';btn.className='small-button secondary-button';btn.textContent='Edit';btn.onclick=()=>setAssetMasterEditMode(row);tr.lastElementChild.appendChild(btn);assetMasterTableBodyEl.appendChild(tr);});}
   async function renumberAssetMasterSortOrder(){assetMasterErrorEl.textContent='';assetMasterSuccessEl.textContent='';if(!assetMasterRows.length){assetMasterErrorEl.textContent='No Asset Master rows to renumber.';return;}if(!confirm('Renumber Sort Order based on current displayed order?\n\nThe new numbers will be 10, 20, 30...'))return;masterRenumberButtonEl.disabled=true;masterRenumberButtonEl.textContent='Renumbering...';try{const rows=[...assetMasterRows].sort((a,b)=>{const s=Number(a.sort_order||999)-Number(b.sort_order||999);if(s)return s;const c=(a.asset_category||'').localeCompare(b.asset_category||'');if(c)return c;return(a.asset_name||'').localeCompare(b.asset_name||'');});for(let i=0;i<rows.length;i++){const next=(i+1)*10;if(Number(rows[i].sort_order)!==next){const{error}=await client.from('asset_master').update({sort_order:next}).eq('id',rows[i].id);if(error)throw error;}}assetMasterSuccessEl.textContent='Sort Order renumbered successfully. Current order is now 10, 20, 30...';resetAssetMasterForm();await loadAssetMaster();}catch(e){assetMasterErrorEl.textContent='Error renumbering Sort Order: '+(e.message||JSON.stringify(e));}finally{masterRenumberButtonEl.disabled=false;masterRenumberButtonEl.textContent='Renumber Sort Order';}}
   async function saveAssetMaster(event){event.preventDefault();assetMasterErrorEl.textContent='';assetMasterSuccessEl.textContent='';const payload={asset_category:masterAssetCategoryEl.value,asset_name:masterAssetNameEl.value.trim(),unit_price_jpy:Number(masterUnitPriceJpyEl.value),sort_order:Number(masterSortOrderEl.value),is_active:masterIsActiveEl.value==='true'};if(!payload.asset_category||!payload.asset_name){assetMasterErrorEl.textContent='Please fill in Category and Asset Name.';return;}if(Number.isNaN(payload.unit_price_jpy)||payload.unit_price_jpy<0){assetMasterErrorEl.textContent='Please enter a valid Unit Price.';return;}if(Number.isNaN(payload.sort_order)||payload.sort_order<1){assetMasterErrorEl.textContent='Please enter a valid Sort Order.';return;}masterSaveButtonEl.disabled=true;masterSaveButtonEl.textContent=editingAssetMasterId===null?'Saving...':'Updating...';try{if(editingAssetMasterId===null){const{error}=await client.from('asset_master').insert([payload]);if(error)throw error;assetMasterSuccessEl.textContent='Asset Master saved successfully.';}else{const{error}=await client.from('asset_master').update(payload).eq('id',editingAssetMasterId);if(error)throw error;assetMasterSuccessEl.textContent='Asset Master updated successfully.';}resetAssetMasterForm();await loadAssetMaster();}catch(e){assetMasterErrorEl.textContent='Error saving Asset Master: '+(e.message||JSON.stringify(e));}finally{masterSaveButtonEl.disabled=false;masterSaveButtonEl.textContent=editingAssetMasterId===null?'Save Asset Master':'Update Asset Master';}}
+  function stockSecurityKey(row){
+    const code=(row.security_code||'').trim();
+    return code ? `CODE:${code}` : `NAME:${(row.security_name||'').trim()}`;
+  }
+  function preferredSecurityName(rows){
+    const names=rows.map(r=>(r.security_name||'').trim()).filter(Boolean);
+    if(!names.length)return'-';
+    const counts=new Map();names.forEach(n=>counts.set(n,(counts.get(n)||0)+1));
+    return [...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ja'))[0][0];
+  }
+  function calculateAccountStockSummary(rows){
+    const sorted=[...rows].sort((a,b)=>(a.transaction_date||'').localeCompare(b.transaction_date||'')||Number(a.id||0)-Number(b.id||0));
+    let qty=0,costBasis=0,buyQty=0,buyAmount=0,soldQty=0,saleAmount=0,dividend=0,realized=0;
+    sorted.forEach(r=>{
+      const q=Number(r.quantity||0),amount=Number(r.amount_jpy||0),type=r.transaction_type;
+      if(type==='Buy'||type==='Transfer In'){
+        qty+=q;
+        if(type==='Buy'){buyQty+=q;buyAmount+=amount;costBasis+=amount;}
+      }else if(type==='Sell'||type==='Transfer Out'){
+        const avg=qty>0?costBasis/qty:0;
+        const removeQty=Math.min(q,Math.max(qty,0));
+        const removedCost=avg*removeQty;
+        qty-=q;
+        costBasis-=removedCost;
+        if(Math.abs(qty)<1e-9)qty=0;
+        if(Math.abs(costBasis)<1e-6)costBasis=0;
+        if(type==='Sell'){soldQty+=q;saleAmount+=amount;realized+=amount-removedCost;}
+      }else if(type==='Dividend'){
+        dividend+=amount;
+      }else if(type==='Stock Split'){
+        // Import convention: quantity is the number of additional shares received at zero cost.
+        qty+=q;
+      }
+    });
+    return {buyQty,buyAmount,soldQty,saleAmount,dividend,currentQty:qty,averageCost:qty>0?costBasis/qty:0,remainingCostBasis:costBasis,realizedProfit:realized};
+  }
+  function buildStockSummaryData(){
+    const securities=new Map();
+    stockTransactionRows.forEach(r=>{
+      const key=stockSecurityKey(r);if(!securities.has(key))securities.set(key,[]);securities.get(key).push(r);
+    });
+    return [...securities.entries()].map(([key,rows])=>{
+      const accounts=new Map();
+      rows.forEach(r=>{const ak=`${r.account_name||'-'}||${r.account_type||'-'}`;if(!accounts.has(ak))accounts.set(ak,[]);accounts.get(ak).push(r);});
+      const accountSummaries=[...accounts.entries()].map(([ak,arows])=>{const [accountName,accountType]=ak.split('||');return {accountName,accountType,...calculateAccountStockSummary(arows)};});
+      const total={purchaseAmount:0,saleAmount:0,dividend:0,currentQty:0};
+      accountSummaries.forEach(a=>{total.purchaseAmount+=a.buyAmount;total.saleAmount+=a.saleAmount;total.dividend+=a.dividend;total.currentQty+=a.currentQty;});
+      return {key,securityName:preferredSecurityName(rows),securityCode:(rows.find(r=>r.security_code)?.security_code)||'',accounts:accountSummaries.sort((a,b)=>a.accountName.localeCompare(b.accountName,'ja')||a.accountType.localeCompare(b.accountType,'ja')),...total};
+    }).sort((a,b)=>a.securityName.localeCompare(b.securityName,'ja'));
+  }
+  function renderStockSummary(){
+    stockSummaryErrorEl.textContent='';stockSummaryTableBodyEl.innerHTML='';stockSummaryEmptyEl.textContent='';
+    const all=buildStockSummaryData();
+    stockSummaryPurchaseEl.textContent=`¥ ${formatValueJpy(all.reduce((s,x)=>s+x.purchaseAmount,0))}`;
+    stockSummarySaleEl.textContent=`¥ ${formatValueJpy(all.reduce((s,x)=>s+x.saleAmount,0))}`;
+    stockSummaryDividendEl.textContent=`¥ ${formatValueJpy(all.reduce((s,x)=>s+x.dividend,0))}`;
+    stockSummaryCurrentCountEl.textContent=all.filter(x=>x.currentQty>0).length.toLocaleString();
+    const status=stockHoldingFilterEl.value;
+    const rows=all.filter(x=>status==='all'||(status==='current'&&x.currentQty>0)||(status==='sold'&&x.currentQty<=0));
+    if(!rows.length){stockSummaryEmptyEl.textContent='No securities found for the selected holding status.';return;}
+    rows.forEach(item=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${item.securityName}</td><td>${item.securityCode||''}</td><td class="number">¥ ${formatValueJpy(item.purchaseAmount)}</td><td class="number">¥ ${formatValueJpy(item.saleAmount)}</td><td class="number">¥ ${formatValueJpy(item.dividend)}</td><td class="number">${Number(item.currentQty||0).toLocaleString()}</td><td></td>`;
+      const btn=document.createElement('button');btn.type='button';btn.className='small-button secondary-button';btn.textContent='Details';
+      const detailTr=document.createElement('tr');detailTr.className='hidden';const detailTd=document.createElement('td');detailTd.colSpan=7;
+      const inner=document.createElement('div');inner.style.padding='8px 0';
+      inner.innerHTML=`<div style="font-weight:bold;margin-bottom:8px;">${item.securityName}${item.securityCode?` (${item.securityCode})`:''} - Account Details</div><div class="table-wrap"><table><thead><tr><th>Account</th><th>Account Type</th><th>Purchased Qty</th><th>Purchase Amount</th><th>Sold Qty</th><th>Sale Amount</th><th>Current Qty</th><th>Average Cost</th><th>Remaining Cost Basis</th><th>Dividend</th></tr></thead><tbody>${item.accounts.map(a=>`<tr><td>${a.accountName}</td><td>${a.accountType}</td><td class="number">${Number(a.buyQty||0).toLocaleString()}</td><td class="number">¥ ${formatValueJpy(a.buyAmount)}</td><td class="number">${Number(a.soldQty||0).toLocaleString()}</td><td class="number">¥ ${formatValueJpy(a.saleAmount)}</td><td class="number">${Number(a.currentQty||0).toLocaleString()}</td><td class="number">${a.currentQty>0?'¥ '+formatValueJpy(a.averageCost):'-'}</td><td class="number">${a.currentQty>0?'¥ '+formatValueJpy(a.remainingCostBasis):'-'}</td><td class="number">¥ ${formatValueJpy(a.dividend)}</td></tr>`).join('')}</tbody></table></div>`;
+      detailTd.appendChild(inner);detailTr.appendChild(detailTd);
+      btn.addEventListener('click',()=>{const hidden=detailTr.classList.toggle('hidden');btn.textContent=hidden?'Details':'Close';});
+      tr.lastElementChild.appendChild(btn);stockSummaryTableBodyEl.append(tr,detailTr);
+    });
+  }
   function resetStockTransactionForm(){
     editingStockTransactionId=null;
     stockTransactionFormTitleEl.textContent='Add Stock Transaction';
@@ -335,8 +426,8 @@
     try{
       stockTableErrorEl.textContent='';const pageSize=1000;let from=0,all=[];
       while(true){const res=await client.from('stock_transactions').select('*').order('transaction_date',{ascending:false}).order('id',{ascending:false}).range(from,from+pageSize-1);if(res.error)throw res.error;const page=res.data||[];all=all.concat(page);if(page.length<pageSize)break;from+=pageSize;}
-      stockTransactionRows=all;populateStockSecurityFilter();renderStockTransactions();
-    }catch(e){stockTransactionRows=[];stockTransactionTableBodyEl.innerHTML='';stockTransactionCaptionEl.textContent='';stockTableErrorEl.textContent='Error loading stock transactions: '+(e.message||JSON.stringify(e));}
+      stockTransactionRows=all;populateStockSecurityFilter();renderStockTransactions();renderStockSummary();
+    }catch(e){stockTransactionRows=[];stockTransactionTableBodyEl.innerHTML='';stockTransactionCaptionEl.textContent='';stockSummaryTableBodyEl.innerHTML='';stockSummaryEmptyEl.textContent='';stockTableErrorEl.textContent='Error loading stock transactions: '+(e.message||JSON.stringify(e));}
   }
   async function loadAssetMaster(){assetMasterStatusEl.textContent='Loading Asset Master...';const{data,error}=await client.from('asset_master').select('id, asset_category, asset_name, unit_price_jpy, sort_order, is_active, updated_at, created_at').order('sort_order',{ascending:true});if(error){assetMasterRows=[];assetMasterStatusEl.textContent='Asset Master load failed: '+error.message;throw error;}assetMasterRows=data||[];assetMasterStatusEl.textContent=`Asset Master loaded: ${assetMasterRows.filter(r=>r.is_active!==false).length} active assets.`;populateCategorySelects();populateChartAssetFilter();if(assetCategoryEl.value)populateAssetNameOptions(assetCategoryEl.value,assetNameEl.value);renderAssetMasterTable();updateMonthSetupState();}
   async function loadAssets(){try{tableErrorEl.textContent='';totalValueEl.textContent='Loading...';totalCaptionEl.textContent='Loading asset data...';monthSummaryBodyEl.innerHTML='';assetTableBodyEl.innerHTML='';chartEmptyMessageEl.textContent='';const pageSize=1000;let from=0,all=[];while(true){const res=await client.from('assets').select('*').order('record_date',{ascending:false}).order('id',{ascending:false}).range(from,from+pageSize-1);if(res.error)throw res.error;const page=res.data||[];all=all.concat(page);if(page.length<pageSize)break;from+=pageSize;}assetRows=all.map(r=>({id:r.id,record_date:r.record_date,asset_category:r.asset_category,asset_name:r.asset_name,amount:r.amount,unit_price_jpy:r.unit_price_jpy,updated_at:r.updated_at,created_at:r.created_at}));populateMonthFilters();populateSetupMonthOptions();populateDetailMonthOptions();renderSummary();renderDetails();renderCategoryTrendChart();updateMonthSetupState();}catch(e){totalValueEl.textContent='-';totalCaptionEl.textContent='Load failed';tableErrorEl.textContent='Error loading data: '+(e.message||JSON.stringify(e));chartEmptyMessageEl.textContent='Chart could not be loaded.';}}
@@ -349,7 +440,7 @@
   client.auth.onAuthStateChange((_e,session)=>{currentUser=session?.user??null;updateAuthUI();if(currentUser){initializeAppData();}else{assetRows=[];assetMasterRows=[];stockTransactionRows=[];selectedMonth='';selectedSummaryYear='';summaryYearTouched=false;totalValueEl.textContent='¥ 0';totalCaptionEl.textContent='';monthSummaryBodyEl.innerHTML='';assetTableBodyEl.innerHTML='';assetMasterTableBodyEl.innerHTML='';stockTransactionTableBodyEl.innerHTML='';stockTransactionCaptionEl.textContent='';assetMasterStatusEl.textContent='Asset Master will be loaded after sign-in.';if(categoryTrendChart){categoryTrendChart.destroy();categoryTrendChart=null;}resetForm();resetAssetMasterForm();resetStockTransactionForm();}});
   amountEl.addEventListener('input',calculateValue);unitPriceJpyEl.addEventListener('input',calculateValue);assetCategoryEl.addEventListener('change',()=>{populateAssetNameOptions(assetCategoryEl.value,'');unitPriceJpyEl.value='';calculatedValueEl.value='';unitPriceHintEl.textContent='Select Asset Name to prefill Unit Price.';});assetNameEl.addEventListener('change',()=>applyDefaultUnitPrice(assetNameEl.value,true));setupMonthSelectEl.addEventListener('change',updateMonthSetupState);detailMonthSelectEl.addEventListener('change',()=>{selectedMonth=detailMonthSelectEl.value;renderDetails();updateSelectedMonthTotal();});
   chartCategoryFilterEl.addEventListener('change',()=>{populateChartAssetFilter();renderCategoryTrendChart();});chartAssetFilterEl.addEventListener('change',renderCategoryTrendChart);chartStartMonthEl.addEventListener('change',renderCategoryTrendChart);chartEndMonthEl.addEventListener('change',renderCategoryTrendChart);
-  summaryYearFilterEl.addEventListener('change',()=>{summaryYearTouched=true;selectedSummaryYear=summaryYearFilterEl.value;renderSummary();renderDetails();});stockSecurityFilterEl.addEventListener('change',renderStockTransactions);stockTypeFilterEl.addEventListener('change',renderStockTransactions);stockStartDateEl.addEventListener('change',renderStockTransactions);stockEndDateEl.addEventListener('change',renderStockTransactions);stockClearButtonEl.addEventListener('click',resetStockTransactionForm);stockTransactionFormEl.addEventListener('submit',saveStockTransaction);clearButtonEl.addEventListener('click',resetForm);monthSetupButtonEl.addEventListener('click',setupSelectedMonthAssets);assetFormEl.addEventListener('submit',saveRecord);masterClearButtonEl.addEventListener('click',resetAssetMasterForm);masterRenumberButtonEl.addEventListener('click',renumberAssetMasterSortOrder);assetMasterFormEl.addEventListener('submit',saveAssetMaster);sendMagicLinkButtonEl.addEventListener('click',sendMagicLink);logoutButtonEl.addEventListener('click',logout);
+  summaryYearFilterEl.addEventListener('change',()=>{summaryYearTouched=true;selectedSummaryYear=summaryYearFilterEl.value;renderSummary();renderDetails();});stockHoldingFilterEl.addEventListener('change',renderStockSummary);stockSecurityFilterEl.addEventListener('change',renderStockTransactions);stockTypeFilterEl.addEventListener('change',renderStockTransactions);stockStartDateEl.addEventListener('change',renderStockTransactions);stockEndDateEl.addEventListener('change',renderStockTransactions);stockClearButtonEl.addEventListener('click',resetStockTransactionForm);stockTransactionFormEl.addEventListener('submit',saveStockTransaction);clearButtonEl.addEventListener('click',resetForm);monthSetupButtonEl.addEventListener('click',setupSelectedMonthAssets);assetFormEl.addEventListener('submit',saveRecord);masterClearButtonEl.addEventListener('click',resetAssetMasterForm);masterRenumberButtonEl.addEventListener('click',renumberAssetMasterSortOrder);assetMasterFormEl.addEventListener('submit',saveAssetMaster);sendMagicLinkButtonEl.addEventListener('click',sendMagicLink);logoutButtonEl.addEventListener('click',logout);
   populateCategorySelects();resetForm();resetAssetMasterForm();resetStockTransactionForm();initializeNavigation();initializeAuth();
 </script>
 </body>
