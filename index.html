@@ -48,6 +48,14 @@
     .selected-row { background: #eef6ff; }
     .empty-message { color: #666; font-style: italic; padding-top: 12px; }
     .hint-box { margin-top: 8px; padding: 8px 10px; background: #f8f8f8; border: 1px solid #e5e5e5; border-radius: 8px; color: #666; font-size: 13px; }
+
+    .summary-toggle-col { width: 42px; min-width: 42px; text-align: center; }
+    .summary-toggle-button { width: 28px; height: 28px; padding: 0; border-radius: 6px; background: #666; font-size: 14px; line-height: 28px; }
+    .summary-security { min-width: 210px; }
+    .sortable-header { cursor: pointer; user-select: none; white-space: nowrap; }
+    .sortable-header:hover { background: #e4e4e4; }
+    .sort-indicator { color: #666; font-size: 11px; margin-left: 4px; }
+    .stock-detail-row { background: #fafafa; }
     @media (max-width: 800px) {
       body { margin: 14px; }
       form { grid-template-columns: 1fr; }
@@ -61,7 +69,7 @@
 </head>
 <body>
   <div class="card">
-    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.2.1</span></h1>
+    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.2.2</span></h1>
   </div>
 
   <div class="card">
@@ -76,7 +84,7 @@
   </div>
 
   <div id="appArea" class="hidden">
-    <div class="card" id="navigationArea"><div class="nav-row"><button type="button" class="nav-button" data-page="dashboard">Dashboard</button><button type="button" class="nav-button" data-page="records">Records</button><button type="button" class="nav-button" data-page="asset-master">Asset Master</button><button type="button" class="nav-button" data-page="stock-transactions">Stock Transactions</button><button type="button" class="nav-button" data-page="stock-summary">Stock Summary</button></div><div class="section-note" style="margin-top:10px;">URL hash controls the screen: <code>#dashboard</code>, <code>#records</code>, <code>#asset-master</code>, <code>#stock-transactions</code>, <code>#stock-summary</code>.</div></div>
+    <div class="card" id="navigationArea"><div class="nav-row"><button type="button" class="nav-button" data-page="dashboard">Dashboard</button><button type="button" class="nav-button" data-page="records">Records</button><button type="button" class="nav-button" data-page="asset-master">Asset Master</button><button type="button" class="nav-button" data-page="stock-summary">Stock Summary</button><button type="button" class="nav-button" data-page="stock-transactions">Stock Transactions</button></div><div class="section-note" style="margin-top:10px;">URL hash controls the screen: <code>#dashboard</code>, <code>#records</code>, <code>#asset-master</code>, <code>#stock-summary</code>, <code>#stock-transactions</code>.</div></div>
 
     <div id="dashboardPage" class="page-section">
       <div class="card"><h2>Selected Month Total Asset Value</h2><div id="totalValue" class="summary-value">Loading...</div><div id="totalCaption" class="section-note"></div></div>
@@ -151,7 +159,7 @@
           <div class="hint-box" style="min-width:180px;"><div class="section-note">Current Securities</div><div id="stockSummaryCurrentCount" class="summary-value">0</div></div>
         </div>
         <div class="section-note" style="margin-bottom:10px;">Security-level totals are aggregated across accounts. Average Cost and Remaining Cost Basis are shown only in the account-level details.</div>
-        <div class="table-wrap"><table><thead><tr><th>Security</th><th>Code</th><th>Account</th><th>Account Type</th><th>Purchased Qty</th><th>Purchase Amount</th><th>Sold Qty</th><th>Sale Amount</th><th>Current Qty</th><th>Average Cost</th><th>Remaining Cost Basis</th><th>Dividend</th></tr></thead><tbody id="stockSummaryTableBody"></tbody></table></div>
+        <div class="table-wrap"><table id="stockSummaryTable"><thead><tr><th class="summary-toggle-col"></th><th class="sortable-header summary-security" data-sort="securityName">Security<span class="sort-indicator"></span></th><th class="sortable-header" data-sort="securityCode">Code<span class="sort-indicator"></span></th><th>Account</th><th>Account Type</th><th class="sortable-header" data-sort="purchasedQty">Purchased Qty<span class="sort-indicator"></span></th><th class="sortable-header" data-sort="purchaseAmount">Purchase Amount<span class="sort-indicator"></span></th><th class="sortable-header" data-sort="soldQty">Sold Qty<span class="sort-indicator"></span></th><th class="sortable-header" data-sort="saleAmount">Sale Amount<span class="sort-indicator"></span></th><th class="sortable-header" data-sort="currentQty">Current Qty<span class="sort-indicator"></span></th><th>Average Cost</th><th class="sortable-header" data-sort="remainingCostBasis">Remaining Cost Basis<span class="sort-indicator"></span></th><th class="sortable-header" data-sort="dividend">Dividend<span class="sort-indicator"></span></th></tr></thead><tbody id="stockSummaryTableBody"></tbody></table></div>
         <div id="stockSummaryEmpty" class="empty-message"></div><div id="stockSummaryError" class="error"></div>
       </div>
     </div>
@@ -170,8 +178,8 @@
   const assetFormCardEl=$('assetFormCard'), assetFormEl=$('assetForm'), formTitleEl=$('formTitle'), formModeBadgeEl=$('formModeBadge'), recordDateEl=$('recordDate'), setupMonthSelectEl=$('setupMonthSelect'), monthSetupHintEl=$('monthSetupHint'), monthSetupButtonEl=$('monthSetupButton'), assetCategoryEl=$('assetCategory'), assetNameEl=$('assetName'), amountEl=$('amount'), unitPriceJpyEl=$('unitPriceJpy'), unitPriceHintEl=$('unitPriceHint'), assetMasterStatusEl=$('assetMasterStatus'), calculatedValueEl=$('calculatedValue'), saveButtonEl=$('saveButton'), clearButtonEl=$('clearButton'), formSuccessEl=$('formSuccess'), formErrorEl=$('formError');
   const assetMasterCardEl=$('assetMasterCard'), assetMasterFormEl=$('assetMasterForm'), assetMasterFormTitleEl=$('assetMasterFormTitle'), assetMasterModeBadgeEl=$('assetMasterModeBadge'), masterAssetCategoryEl=$('masterAssetCategory'), masterAssetNameEl=$('masterAssetName'), masterUnitPriceJpyEl=$('masterUnitPriceJpy'), masterSortOrderEl=$('masterSortOrder'), masterIsActiveEl=$('masterIsActive'), masterSaveButtonEl=$('masterSaveButton'), masterClearButtonEl=$('masterClearButton'), masterRenumberButtonEl=$('masterRenumberButton'), assetMasterSuccessEl=$('assetMasterSuccess'), assetMasterErrorEl=$('assetMasterError'), assetMasterTableBodyEl=$('assetMasterTableBody'), assetMasterEmptyEl=$('assetMasterEmpty');
   const stockTransactionsPageEl=$('stockTransactionsPage'), stockTransactionFormCardEl=$('stockTransactionFormCard'), stockTransactionFormEl=$('stockTransactionForm'), stockTransactionFormTitleEl=$('stockTransactionFormTitle'), stockTransactionModeBadgeEl=$('stockTransactionModeBadge'), stockTransactionDateEl=$('stockTransactionDate'), stockTransactionTypeEl=$('stockTransactionType'), stockSecurityNameEl=$('stockSecurityName'), stockSecurityCodeEl=$('stockSecurityCode'), stockQuantityEl=$('stockQuantity'), stockAmountJpyEl=$('stockAmountJpy'), stockAccountNameEl=$('stockAccountName'), stockAccountTypeEl=$('stockAccountType'), stockMemoEl=$('stockMemo'), stockSaveButtonEl=$('stockSaveButton'), stockClearButtonEl=$('stockClearButton'), stockFormSuccessEl=$('stockFormSuccess'), stockFormErrorEl=$('stockFormError'), stockSecurityFilterEl=$('stockSecurityFilter'), stockTypeFilterEl=$('stockTypeFilter'), stockStartDateEl=$('stockStartDate'), stockEndDateEl=$('stockEndDate'), stockTransactionCaptionEl=$('stockTransactionCaption'), stockTransactionTableBodyEl=$('stockTransactionTableBody'), stockTransactionEmptyEl=$('stockTransactionEmpty'), stockTableErrorEl=$('stockTableError');
-  const stockSummaryPageEl=$('stockSummaryPage'), stockHoldingFilterEl=$('stockHoldingFilter'), stockSummaryPurchaseEl=$('stockSummaryPurchase'), stockSummarySaleEl=$('stockSummarySale'), stockSummaryDividendEl=$('stockSummaryDividend'), stockSummaryCurrentCountEl=$('stockSummaryCurrentCount'), stockSummaryTableBodyEl=$('stockSummaryTableBody'), stockSummaryEmptyEl=$('stockSummaryEmpty'), stockSummaryErrorEl=$('stockSummaryError');
-  let currentUser=null, assetRows=[], assetMasterRows=[], stockTransactionRows=[], selectedMonth='', selectedSummaryYear='', summaryYearTouched=false, editingId=null, editingAssetMasterId=null, editingStockTransactionId=null, categoryTrendChart=null;
+  const stockSummaryPageEl=$('stockSummaryPage'), stockSummaryTableEl=$('stockSummaryTable'), stockHoldingFilterEl=$('stockHoldingFilter'), stockSummaryPurchaseEl=$('stockSummaryPurchase'), stockSummarySaleEl=$('stockSummarySale'), stockSummaryDividendEl=$('stockSummaryDividend'), stockSummaryCurrentCountEl=$('stockSummaryCurrentCount'), stockSummaryTableBodyEl=$('stockSummaryTableBody'), stockSummaryEmptyEl=$('stockSummaryEmpty'), stockSummaryErrorEl=$('stockSummaryError');
+  let currentUser=null, assetRows=[], assetMasterRows=[], stockTransactionRows=[], selectedMonth='', selectedSummaryYear='', summaryYearTouched=false, editingId=null, editingAssetMasterId=null, editingStockTransactionId=null, stockSummarySort={key:'securityCode',direction:'asc'}, categoryTrendChart=null;
 
   function formatValueJpy(v){return Math.floor(Number(v||0)).toLocaleString();}
   function formatUnitPrice(v){return Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -266,8 +274,16 @@
   function renderAssetMasterTable(){assetMasterTableBodyEl.innerHTML='';assetMasterEmptyEl.textContent='';if(!assetMasterRows.length){assetMasterEmptyEl.textContent='No asset master records found.';return;}[...assetMasterRows].sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999)).forEach(row=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${row.asset_category||''}</td><td>${row.asset_name||''}</td><td class="number">${formatUnitPrice(row.unit_price_jpy)}</td><td class="number">${row.sort_order||''}</td><td>${row.is_active===false?'Inactive':'Active'}</td><td class="nowrap">${formatDateTime(row.updated_at||row.created_at)}</td><td></td>`;const btn=document.createElement('button');btn.type='button';btn.className='small-button secondary-button';btn.textContent='Edit';btn.onclick=()=>setAssetMasterEditMode(row);tr.lastElementChild.appendChild(btn);assetMasterTableBodyEl.appendChild(tr);});}
   async function renumberAssetMasterSortOrder(){assetMasterErrorEl.textContent='';assetMasterSuccessEl.textContent='';if(!assetMasterRows.length){assetMasterErrorEl.textContent='No Asset Master rows to renumber.';return;}if(!confirm('Renumber Sort Order based on current displayed order?\n\nThe new numbers will be 10, 20, 30...'))return;masterRenumberButtonEl.disabled=true;masterRenumberButtonEl.textContent='Renumbering...';try{const rows=[...assetMasterRows].sort((a,b)=>{const s=Number(a.sort_order||999)-Number(b.sort_order||999);if(s)return s;const c=(a.asset_category||'').localeCompare(b.asset_category||'');if(c)return c;return(a.asset_name||'').localeCompare(b.asset_name||'');});for(let i=0;i<rows.length;i++){const next=(i+1)*10;if(Number(rows[i].sort_order)!==next){const{error}=await client.from('asset_master').update({sort_order:next}).eq('id',rows[i].id);if(error)throw error;}}assetMasterSuccessEl.textContent='Sort Order renumbered successfully. Current order is now 10, 20, 30...';resetAssetMasterForm();await loadAssetMaster();}catch(e){assetMasterErrorEl.textContent='Error renumbering Sort Order: '+(e.message||JSON.stringify(e));}finally{masterRenumberButtonEl.disabled=false;masterRenumberButtonEl.textContent='Renumber Sort Order';}}
   async function saveAssetMaster(event){event.preventDefault();assetMasterErrorEl.textContent='';assetMasterSuccessEl.textContent='';const payload={asset_category:masterAssetCategoryEl.value,asset_name:masterAssetNameEl.value.trim(),unit_price_jpy:Number(masterUnitPriceJpyEl.value),sort_order:Number(masterSortOrderEl.value),is_active:masterIsActiveEl.value==='true'};if(!payload.asset_category||!payload.asset_name){assetMasterErrorEl.textContent='Please fill in Category and Asset Name.';return;}if(Number.isNaN(payload.unit_price_jpy)||payload.unit_price_jpy<0){assetMasterErrorEl.textContent='Please enter a valid Unit Price.';return;}if(Number.isNaN(payload.sort_order)||payload.sort_order<1){assetMasterErrorEl.textContent='Please enter a valid Sort Order.';return;}masterSaveButtonEl.disabled=true;masterSaveButtonEl.textContent=editingAssetMasterId===null?'Saving...':'Updating...';try{if(editingAssetMasterId===null){const{error}=await client.from('asset_master').insert([payload]);if(error)throw error;assetMasterSuccessEl.textContent='Asset Master saved successfully.';}else{const{error}=await client.from('asset_master').update(payload).eq('id',editingAssetMasterId);if(error)throw error;assetMasterSuccessEl.textContent='Asset Master updated successfully.';}resetAssetMasterForm();await loadAssetMaster();}catch(e){assetMasterErrorEl.textContent='Error saving Asset Master: '+(e.message||JSON.stringify(e));}finally{masterSaveButtonEl.disabled=false;masterSaveButtonEl.textContent=editingAssetMasterId===null?'Save Asset Master':'Update Asset Master';}}
+  function normalizedStockCode(row){
+    const raw=(row.security_code||'').trim();
+    if(raw)return raw;
+    const name=(row.security_name||'').trim();
+    if(name==='eMAXIS Slim　全世界株式（除く日本）'||name==='eMAXIS Slim 全世界株式（除く日本）')return '03316183';
+    if(name==='インデックスファンド225')return '02311886';
+    return '';
+  }
   function stockSecurityKey(row){
-    const code=(row.security_code||'').trim();
+    const code=normalizedStockCode(row);
     return code ? `CODE:${code}` : `NAME:${(row.security_name||'').trim()}`;
   }
   function preferredSecurityName(rows){
@@ -313,42 +329,76 @@
       const accountSummaries=[...accounts.entries()].map(([ak,arows])=>{const [accountName,accountType]=ak.split('||');return {accountName,accountType,...calculateAccountStockSummary(arows)};});
       const total={purchaseAmount:0,saleAmount:0,dividend:0,currentQty:0};
       accountSummaries.forEach(a=>{total.purchaseAmount+=a.buyAmount;total.saleAmount+=a.saleAmount;total.dividend+=a.dividend;total.currentQty+=a.currentQty;});
-      return {key,securityName:preferredSecurityName(rows),securityCode:(rows.find(r=>r.security_code)?.security_code)||'',accounts:accountSummaries.sort((a,b)=>a.accountName.localeCompare(b.accountName,'ja')||a.accountType.localeCompare(b.accountType,'ja')),...total};
+      return {key,securityName:preferredSecurityName(rows),securityCode:normalizedStockCode(rows.find(r=>normalizedStockCode(r))||rows[0]),accounts:accountSummaries.sort((a,b)=>a.accountName.localeCompare(b.accountName,'ja')||a.accountType.localeCompare(b.accountType,'ja')),...total};
     }).sort((a,b)=>a.securityName.localeCompare(b.securityName,'ja'));
+  }
+  function stockCodeSortRank(code){
+    const c=String(code||'').trim();
+    if(/^\d{4}$/.test(c))return 0;
+    if(/^\d{8}$/.test(c))return 1;
+    if(c)return 2;
+    return 3;
+  }
+  function compareStockSummaryItems(a,b,key){
+    const numericKeys=new Set(['purchasedQty','purchaseAmount','soldQty','saleAmount','currentQty','remainingCostBasis','dividend']);
+    if(key==='securityCode'){
+      const ra=stockCodeSortRank(a.securityCode),rb=stockCodeSortRank(b.securityCode);
+      if(ra!==rb)return ra-rb;
+      if(ra===0||ra===1)return String(a.securityCode).localeCompare(String(b.securityCode),'en',{numeric:true});
+      if(a.securityCode!==b.securityCode)return String(a.securityCode||'').localeCompare(String(b.securityCode||''),'ja');
+      return a.securityName.localeCompare(b.securityName,'ja');
+    }
+    if(numericKeys.has(key))return Number(a[key]||0)-Number(b[key]||0);
+    return String(a[key]||'').localeCompare(String(b[key]||''),'ja');
+  }
+  function updateStockSummarySortIndicators(){
+    stockSummaryTableEl.querySelectorAll('.sortable-header').forEach(th=>{
+      const indicator=th.querySelector('.sort-indicator');
+      if(!indicator)return;
+      indicator.textContent=th.dataset.sort===stockSummarySort.key?(stockSummarySort.direction==='asc'?'▲':'▼'):'';
+    });
   }
   function renderStockSummary(){
     stockSummaryErrorEl.textContent='';stockSummaryTableBodyEl.innerHTML='';stockSummaryEmptyEl.textContent='';
-    const all=buildStockSummaryData();
+    const all=buildStockSummaryData().map(item=>({
+      ...item,
+      purchasedQty:item.accounts.reduce((sum,a)=>sum+Number(a.buyQty||0),0),
+      soldQty:item.accounts.reduce((sum,a)=>sum+Number(a.soldQty||0),0),
+      remainingCostBasis:item.accounts.reduce((sum,a)=>sum+Number(a.remainingCostBasis||0),0)
+    }));
     stockSummaryPurchaseEl.textContent=`¥ ${formatValueJpy(all.reduce((sum,item)=>sum+item.purchaseAmount,0))}`;
     stockSummarySaleEl.textContent=`¥ ${formatValueJpy(all.reduce((sum,item)=>sum+item.saleAmount,0))}`;
     stockSummaryDividendEl.textContent=`¥ ${formatValueJpy(all.reduce((sum,item)=>sum+item.dividend,0))}`;
     stockSummaryCurrentCountEl.textContent=all.filter(item=>item.currentQty>0).length.toLocaleString();
+    const currentCount=all.filter(item=>item.currentQty>0).length;
+    const soldCount=all.length-currentCount;
+    [...stockHoldingFilterEl.options].forEach(o=>{
+      if(o.value==='current')o.textContent=`Current Holdings (${currentCount})`;
+      if(o.value==='sold')o.textContent=`Sold Out (${soldCount})`;
+      if(o.value==='all')o.textContent=`All (${all.length})`;
+    });
     const status=stockHoldingFilterEl.value;
-    const rows=all.filter(item=>status==='all'||(status==='current'&&item.currentQty>0)||(status==='sold'&&item.currentQty<=0));
+    const direction=stockSummarySort.direction==='asc'?1:-1;
+    const rows=all.filter(item=>status==='all'||(status==='current'&&item.currentQty>0)||(status==='sold'&&item.currentQty<=0)).sort((a,b)=>direction*compareStockSummaryItems(a,b,stockSummarySort.key));
+    updateStockSummarySortIndicators();
     if(!rows.length){stockSummaryEmptyEl.textContent='No securities found for the selected holding status.';return;}
     rows.forEach(item=>{
-      const purchasedQty=item.accounts.reduce((sum,a)=>sum+Number(a.buyQty||0),0);
-      const soldQty=item.accounts.reduce((sum,a)=>sum+Number(a.soldQty||0),0);
-      const tr=document.createElement('tr');
-      tr.style.fontWeight='bold';
-      tr.innerHTML=`<td></td><td>${item.securityCode||''}</td><td>-</td><td>-</td><td class="number">${purchasedQty.toLocaleString()}</td><td class="number">¥ ${formatValueJpy(item.purchaseAmount)}</td><td class="number">${soldQty.toLocaleString()}</td><td class="number">¥ ${formatValueJpy(item.saleAmount)}</td><td class="number">${Number(item.currentQty||0).toLocaleString()}</td><td class="number">-</td><td class="number">-</td><td class="number">¥ ${formatValueJpy(item.dividend)}</td>`;
-      const securityTd=tr.firstElementChild;
-      const toggleBtn=document.createElement('button');
-      toggleBtn.type='button';toggleBtn.className='small-button secondary-button';toggleBtn.textContent='▶';toggleBtn.style.marginRight='8px';toggleBtn.setAttribute('aria-label',`Show account details for ${item.securityName}`);
-      const nameSpan=document.createElement('span');nameSpan.textContent=item.securityName;
-      securityTd.append(toggleBtn,nameSpan);
+      const tr=document.createElement('tr');tr.style.fontWeight='bold';
+      tr.innerHTML=`<td class="summary-toggle-col"></td><td class="summary-security">${item.securityName}</td><td>${item.securityCode||'-'}</td><td>-</td><td>-</td><td class="number">${item.purchasedQty.toLocaleString()}</td><td class="number">¥ ${formatValueJpy(item.purchaseAmount)}</td><td class="number">${item.soldQty.toLocaleString()}</td><td class="number">¥ ${formatValueJpy(item.saleAmount)}</td><td class="number">${Number(item.currentQty||0).toLocaleString()}</td><td class="number">-</td><td class="number">${item.currentQty>0?'¥ '+formatValueJpy(item.remainingCostBasis):'-'}</td><td class="number">¥ ${formatValueJpy(item.dividend)}</td>`;
       const detailRows=[];
       item.accounts.forEach(a=>{
-        const detailTr=document.createElement('tr');detailTr.className='hidden';detailTr.style.background='#fafafa';
-        detailTr.innerHTML=`<td style="padding-left:34px;">↳ ${item.securityName}</td><td>${item.securityCode||''}</td><td>${a.accountName}</td><td>${a.accountType}</td><td class="number">${Number(a.buyQty||0).toLocaleString()}</td><td class="number">¥ ${formatValueJpy(a.buyAmount)}</td><td class="number">${Number(a.soldQty||0).toLocaleString()}</td><td class="number">¥ ${formatValueJpy(a.saleAmount)}</td><td class="number">${Number(a.currentQty||0).toLocaleString()}</td><td class="number">${a.currentQty>0?'¥ '+formatValueJpy(a.averageCost):'-'}</td><td class="number">${a.currentQty>0?'¥ '+formatValueJpy(a.remainingCostBasis):'-'}</td><td class="number">¥ ${formatValueJpy(a.dividend)}</td>`;
+        const detailTr=document.createElement('tr');detailTr.className='hidden stock-detail-row';
+        detailTr.innerHTML=`<td class="summary-toggle-col"></td><td class="summary-security" style="padding-left:22px;">↳ ${item.securityName}</td><td>${item.securityCode||'-'}</td><td>${a.accountName}</td><td>${a.accountType}</td><td class="number">${Number(a.buyQty||0).toLocaleString()}</td><td class="number">¥ ${formatValueJpy(a.buyAmount)}</td><td class="number">${Number(a.soldQty||0).toLocaleString()}</td><td class="number">¥ ${formatValueJpy(a.saleAmount)}</td><td class="number">${Number(a.currentQty||0).toLocaleString()}</td><td class="number">${a.currentQty>0?'¥ '+formatValueJpy(a.averageCost):'-'}</td><td class="number">${a.currentQty>0?'¥ '+formatValueJpy(a.remainingCostBasis):'-'}</td><td class="number">¥ ${formatValueJpy(a.dividend)}</td>`;
         detailRows.push(detailTr);
       });
+      const toggleBtn=document.createElement('button');toggleBtn.type='button';toggleBtn.className='summary-toggle-button';toggleBtn.textContent='›';toggleBtn.setAttribute('aria-label',`Show account details for ${item.securityName}`);
       toggleBtn.addEventListener('click',()=>{
         const opening=detailRows.some(row=>row.classList.contains('hidden'));
         detailRows.forEach(row=>row.classList.toggle('hidden',!opening));
-        toggleBtn.textContent=opening?'▼':'▶';
+        toggleBtn.textContent=opening?'⌄':'›';
         toggleBtn.setAttribute('aria-label',`${opening?'Hide':'Show'} account details for ${item.securityName}`);
       });
+      tr.firstElementChild.appendChild(toggleBtn);
       stockSummaryTableBodyEl.append(tr,...detailRows);
     });
   }
@@ -454,7 +504,7 @@
   client.auth.onAuthStateChange((_e,session)=>{currentUser=session?.user??null;updateAuthUI();if(currentUser){initializeAppData();}else{assetRows=[];assetMasterRows=[];stockTransactionRows=[];selectedMonth='';selectedSummaryYear='';summaryYearTouched=false;totalValueEl.textContent='¥ 0';totalCaptionEl.textContent='';monthSummaryBodyEl.innerHTML='';assetTableBodyEl.innerHTML='';assetMasterTableBodyEl.innerHTML='';stockTransactionTableBodyEl.innerHTML='';stockTransactionCaptionEl.textContent='';assetMasterStatusEl.textContent='Asset Master will be loaded after sign-in.';if(categoryTrendChart){categoryTrendChart.destroy();categoryTrendChart=null;}resetForm();resetAssetMasterForm();resetStockTransactionForm();}});
   amountEl.addEventListener('input',calculateValue);unitPriceJpyEl.addEventListener('input',calculateValue);assetCategoryEl.addEventListener('change',()=>{populateAssetNameOptions(assetCategoryEl.value,'');unitPriceJpyEl.value='';calculatedValueEl.value='';unitPriceHintEl.textContent='Select Asset Name to prefill Unit Price.';});assetNameEl.addEventListener('change',()=>applyDefaultUnitPrice(assetNameEl.value,true));setupMonthSelectEl.addEventListener('change',updateMonthSetupState);detailMonthSelectEl.addEventListener('change',()=>{selectedMonth=detailMonthSelectEl.value;renderDetails();updateSelectedMonthTotal();});
   chartCategoryFilterEl.addEventListener('change',()=>{populateChartAssetFilter();renderCategoryTrendChart();});chartAssetFilterEl.addEventListener('change',renderCategoryTrendChart);chartStartMonthEl.addEventListener('change',renderCategoryTrendChart);chartEndMonthEl.addEventListener('change',renderCategoryTrendChart);
-  summaryYearFilterEl.addEventListener('change',()=>{summaryYearTouched=true;selectedSummaryYear=summaryYearFilterEl.value;renderSummary();renderDetails();});stockHoldingFilterEl.addEventListener('change',renderStockSummary);stockSecurityFilterEl.addEventListener('change',renderStockTransactions);stockTypeFilterEl.addEventListener('change',renderStockTransactions);stockStartDateEl.addEventListener('change',renderStockTransactions);stockEndDateEl.addEventListener('change',renderStockTransactions);stockClearButtonEl.addEventListener('click',resetStockTransactionForm);stockTransactionFormEl.addEventListener('submit',saveStockTransaction);clearButtonEl.addEventListener('click',resetForm);monthSetupButtonEl.addEventListener('click',setupSelectedMonthAssets);assetFormEl.addEventListener('submit',saveRecord);masterClearButtonEl.addEventListener('click',resetAssetMasterForm);masterRenumberButtonEl.addEventListener('click',renumberAssetMasterSortOrder);assetMasterFormEl.addEventListener('submit',saveAssetMaster);sendMagicLinkButtonEl.addEventListener('click',sendMagicLink);logoutButtonEl.addEventListener('click',logout);
+  summaryYearFilterEl.addEventListener('change',()=>{summaryYearTouched=true;selectedSummaryYear=summaryYearFilterEl.value;renderSummary();renderDetails();});stockHoldingFilterEl.addEventListener('change',renderStockSummary);stockSummaryTableEl.querySelectorAll('.sortable-header').forEach(th=>th.addEventListener('click',()=>{const key=th.dataset.sort;if(stockSummarySort.key===key)stockSummarySort.direction=stockSummarySort.direction==='asc'?'desc':'asc';else{stockSummarySort.key=key;stockSummarySort.direction='asc';}renderStockSummary();}));stockSecurityFilterEl.addEventListener('change',renderStockTransactions);stockTypeFilterEl.addEventListener('change',renderStockTransactions);stockStartDateEl.addEventListener('change',renderStockTransactions);stockEndDateEl.addEventListener('change',renderStockTransactions);stockClearButtonEl.addEventListener('click',resetStockTransactionForm);stockTransactionFormEl.addEventListener('submit',saveStockTransaction);clearButtonEl.addEventListener('click',resetForm);monthSetupButtonEl.addEventListener('click',setupSelectedMonthAssets);assetFormEl.addEventListener('submit',saveRecord);masterClearButtonEl.addEventListener('click',resetAssetMasterForm);masterRenumberButtonEl.addEventListener('click',renumberAssetMasterSortOrder);assetMasterFormEl.addEventListener('submit',saveAssetMaster);sendMagicLinkButtonEl.addEventListener('click',sendMagicLink);logoutButtonEl.addEventListener('click',logout);
   populateCategorySelects();resetForm();resetAssetMasterForm();resetStockTransactionForm();initializeNavigation();initializeAuth();
 </script>
 </body>
