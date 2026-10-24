@@ -57,10 +57,30 @@
     .sortable-header:hover { background: #e4e4e4; }
     .sort-indicator { color: #666; font-size: 11px; margin-left: 4px; }
     .stock-detail-row { background: #fafafa; }
+    #stockSummaryPage .table-wrap,
+    #stockTransactionsPage .table-wrap,
+    #recordsPage .table-wrap,
+    #masterPage .table-wrap {
+      max-height: none;
+      height: clamp(420px, calc(100vh - 430px), 760px);
+      overflow: auto;
+    }
+    @media (min-height: 1000px) and (min-width: 801px) {
+      #stockSummaryPage .table-wrap,
+      #stockTransactionsPage .table-wrap,
+      #recordsPage .table-wrap,
+      #masterPage .table-wrap {
+        height: clamp(520px, calc(100vh - 410px), 900px);
+      }
+    }
     @media (max-width: 800px) {
       body { margin: 14px; }
       form { grid-template-columns: 1fr; }
       .chart-container { height: 360px; }
+      #stockSummaryPage .table-wrap,
+      #stockTransactionsPage .table-wrap,
+      #recordsPage .table-wrap,
+      #masterPage .table-wrap { height: auto; max-height: 520px; }
       .section-control-chip { width: 100%; border-radius: 12px; }
       .section-control-chip select { width: 100%; min-width: 0; border-radius: 8px; }
       table { font-size: 13px; }
@@ -70,7 +90,7 @@
 </head>
 <body>
   <div class="card">
-    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.5.6</span></h1>
+    <h1>Personal Asset Manager <span style="font-size:16px; font-weight:normal; color:#666; margin-left:12px;">v2.5.7</span></h1>
   </div>
 
   <div class="card">
